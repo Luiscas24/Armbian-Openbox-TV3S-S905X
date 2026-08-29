@@ -18,7 +18,6 @@ jobs:
         
         # 2. Entramos y ejecutamos la compilación sin sudo y con la placa correcta
         FORCE_BASH_DATA="yes" ./compile.sh \
-        ./compile.sh \
           BOARD=lepotato \
           BRANCH=edge \
           RELEASE=bookworm \
