@@ -37,51 +37,29 @@ jobs:
       run: |
         git clone --depth 1 https://github.com/jwrdegoede/rtl8189ES_linux rtl8189es
 
-    - name: 6. Restaurar permisos y Compilar el Módulo Wi-Fi con TRAZA DE ERROR
+    - name: 6. Restaurar permisos, AUDITAR SÍMBOLOS y Compilar el Módulo Wi-Fi
       working-directory: ./rtl8189es
       run: |
         # 1. Devolvemos permisos masivos a toda la carpeta de scripts
         chmod -R +x ../linux-stable/scripts/
         
-        # 2. Inyectamos la configuración inalámbrica base
+        # 2. Forzamos la alineación de la estructura del Kernel de Armbian
         echo "CONFIG_WLAN=y" >> ../linux-stable/.config
         echo "CONFIG_CFG80211=m" >> ../linux-stable/.config
+        
+        # TRUCO DE MEMORIA: Desactivamos la aleatorización y depuraciones que engordan la estructura
+        sed -i 's/CONFIG_RANDSTRUCT_FULL=y/# CONFIG_RANDSTRUCT_FULL is not set/' ../linux-stable/.config
+        sed -i 's/CONFIG_RANDSTRUCT=y/# CONFIG_RANDSTRUCT is not set/' ../linux-stable/.config
+        
+        # Forzamos la reconstrucción limpia del plano base
         make -C ../linux-stable ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- olddefconfig
         
-        # 3. 🔬 TRAZA DE INSPECCIÓN DE EMERGENCIA
-        echo "=========================================================="
-        echo "📸 FOTO ANTES DE LA COMPILACIÓN (¿Qué hay en el archivo?):"
-        echo "=========================================================="
-        if [ -f ../linux-stable/Module.symvers ]; then
-          cat -A ../linux-stable/Module.symvers | head -n 10
-        else
-          echo "⚠️ Module.symvers NO EXISTE antes de compilar."
-        fi
-        echo "=========================================================="
-        
-        # 4. Lanzamos la compilación guardando la salida del error en un log para que no se pierda
-        # Si falla, el script ejecutará el bloque de abajo mostrando la radiografía exacta del archivo corrupto
+        # 3. Lanzamos la compilación cruzada limpia con la LOCALVERSION exacta
         make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- LOCALVERSION=-current-meson64 \
           -C ../linux-stable \
           M=$GITHUB_WORKSPACE/rtl8189es \
           obj-m=8189es.o \
-          modules || {
-            echo "=========================================================="
-            echo "🚨 ALERTA: COMPILACIÓN ROTA. DUMPING DE Module.symvers CORRUPTO:"
-            echo "=========================================================="
-            if [ -f ../linux-stable/Module.symvers ]; then
-              echo "-> Caracteres ocultos reales (cat -A):"
-              cat -A ../linux-stable/Module.symvers
-              echo "----------------------------------------------------------"
-              echo "-> Conteo de líneas y espacios:"
-              wc -l ../linux-stable/Module.symvers
-              grep -c " " ../linux-stable/Module.symvers || true
-            else
-              echo "❌ El archivo fue borrado físicamente por el Makefile."
-            fi
-            echo "=========================================================="
-            exit 2
-          }
+          modules
 
     - name: 7. Guardar el archivo .ko listo para el TV Stick
       if: success()
