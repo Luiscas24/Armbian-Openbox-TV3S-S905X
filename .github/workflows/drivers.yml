@@ -41,26 +41,25 @@ jobs:
     - name: 6. 🔍 COMPILACIÓN FORZADA DE CONTROL DE RED
       working-directory: ./rtl8189es
       run: |
-        # 1. Devolvemos permisos a modpost
-        chmod +x ../linux-stable/scripts/mod/modpost
+        echo "=== 1. Restaurando permisos ejecutable a todo el árbol de herramientas ==="
+        # Le devolvemos los permisos de ejecución a TODA la carpeta de scripts internos del kernel de golpe
+        chmod -R +x ../linux-stable/scripts/
         
-        echo "=== 1. Inyectando soporte de Red Inalámbrica en el Kernel ==="
-        # Añadimos a la fuerza las directivas maestras al archivo de configuración del kernel jalado
+        echo "=== 2. Inyectando soporte de Red Inalámbrica en el Kernel ==="
         echo "CONFIG_WLAN=y" >> ../linux-stable/.config
         echo "CONFIG_CFG80211=m" >> ../linux-stable/.config
         echo "CONFIG_RTL8188E=m" >> ../linux-stable/.config
         
-        # Sincronizamos la configuración interna para que Linux actualice el auto.conf fantasma
+        # Sincronizamos la configuración del kernel
         make -C ../linux-stable ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- olddefconfig
         
-        echo "=== 2. Lanzando compilación real del Driver Wi-Fi ==="
-        # Ahora que el kernel base acepta Wi-Fi, llamamos a la compilación del módulo
+        echo "=== 3. Lanzando compilación real del Driver Wi-Fi ==="
         make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- \
           -C ../linux-stable \
           M=$GITHUB_WORKSPACE/rtl8189es \
           modules
         
-        echo "=== 3. Rastrear archivos .ko generados ==="
+        echo "=== 4. Rastrear archivos .ko generados ==="
         find . -name "*.ko"
 
 
