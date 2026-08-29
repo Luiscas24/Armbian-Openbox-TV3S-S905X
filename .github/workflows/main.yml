@@ -20,7 +20,7 @@ jobs:
       env:
         FORCE_BASH_DATA: "yes"
       run: |
-        # Inyectamos la URL larga del árbol estable y su rama correspondiente de forma estricta
+        # Eliminamos KERNELBRANCH y dejamos que KERNEL_GIT_TAG extraiga el árbol directamente
         ./compile.sh \
           BOARD=lepotato \
           BRANCH=edge \
@@ -30,7 +30,6 @@ jobs:
           INSTALL_HEADERS=yes \
           DOCKER=no \
           KERNEL_GIT_TAG="v6.18.44" \
-          KERNELBRANCH="linux-6.18.y" \
           KERNELSOURCE="https://kernel.org" \
           kernel
 
