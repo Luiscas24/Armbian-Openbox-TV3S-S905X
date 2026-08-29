@@ -1,7 +1,7 @@
 name: "Fase 1.5: Compilador de Drivers RTL8189ES (S905X)"
 
 on:
-  workflow_dispatch: # Control manual por botón desde la web
+  workflow_dispatch: # Control 100% manual por botón desde la web
 
 jobs:
   build-realtek-driver:
@@ -21,8 +21,7 @@ jobs:
       env:
         GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       run: |
-        # Interrogamos a la API de GitHub para buscar el ID de la última compilación exitosa del pipeline del kernel
-        RUN_ID=$(gh run list --workflow "Fase 1: Compilador de Kernel 6.18.44 Puro (S905X)" --status success --limit 1 --json databaseId --jq '.[0].databaseId')
+        RUN_ID=$(gh run list --workflow "Fase 1: Compilador de Kernel 6.18.44 Puro (S905X)" --status success --limit 1 --json databaseId --jq '..databaseId')
         echo "El ID del kernel encontrado es: $RUN_ID"
         echo "kernel_run_id=$RUN_ID" >> $GITHUB_OUTPUT
 
@@ -31,16 +30,21 @@ jobs:
       with:
         name: kernel-tv3s-fuentes-y-headers
         path: linux-stable
-        run-id: ${{ steps.locate-kernel.outputs.kernel_run_id }} # 👈 Le pasamos el ID dinámico que encontramos
+        run-id: ${{ steps.locate-kernel.outputs.kernel_run_id }}
         github-token: ${{ secrets.GITHUB_TOKEN }}
 
     - name: 5. Clonar el repositorio oficial del Driver RTL8189ES
       run: |
         git clone --depth 1 https://github.com/jwrdegoede/rtl8189ES_linux rtl8189es
 
-    - name: 6. Compilar el Módulo Wi-Fi para ARM64
+    - name: 6. Restaurar permisos y Compilar el Módulo Wi-Fi
       working-directory: ./rtl8189es
       run: |
+        # 1. Devolvemos permisos de ejecución a los binarios del kernel que GitHub rompió
+        chmod +x ../linux-stable/scripts/mod/modpost
+        chmod +x ../linux-stable/scripts/recordmcount
+        
+        # 2. Lanzamos la compilación cruzada del driver Wi-Fi
         make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- -C ../linux-stable M=$(pwd) modules
 
     - name: 7. Guardar el archivo .ko listo para el TV Stick
