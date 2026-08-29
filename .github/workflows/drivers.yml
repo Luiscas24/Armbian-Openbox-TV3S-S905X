@@ -40,15 +40,15 @@ jobs:
     - name: 6. Restaurar permisos y Compilar el Módulo Wi-Fi
       working-directory: ./rtl8189es
       run: |
-        # Devolvemos permisos al binario crítico de modpost
-        chmod +x ../linux-stable/scripts/mod/modpost
+        # 1. ⚠️ DEVOLVEMOS PERMISOS MASIVOS A TODA LA CARPETA DE SCRIPTS (Lo que se había omitido)
+        chmod -R +x ../linux-stable/scripts/
         
-        # Inyectamos el soporte inalámbrico directo en el plano del kernel jalado
+        # 2. Inyectamos el soporte inalámbrico directo en el plano del kernel jalado
         echo "CONFIG_WLAN=y" >> ../linux-stable/.config
         echo "CONFIG_CFG80211=m" >> ../linux-stable/.config
         make -C ../linux-stable ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- olddefconfig
         
-        # Lanzamos la compilación cruzada limpia forzando el objeto modular 8189es
+        # 3. Lanzamos la compilación cruzada limpia forzando el objeto modular 8189es
         make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- \
           -C ../linux-stable \
           M=$GITHUB_WORKSPACE/rtl8189es \
