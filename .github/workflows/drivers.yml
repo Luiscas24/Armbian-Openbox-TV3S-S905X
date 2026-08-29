@@ -38,37 +38,30 @@ jobs:
       run: |
         git clone --depth 1 https://github.com/jwrdegoede/rtl8189ES_linux rtl8189es
 
-    - name: 6. 🔍 DIAGNÓSTICO Y COMPILACIÓN FORZADA
+    - name: 6. 🔍 COMPILACIÓN FORZADA DE CONTROL DE RED
       working-directory: ./rtl8189es
       run: |
         # 1. Devolvemos permisos a modpost
         chmod +x ../linux-stable/scripts/mod/modpost
         
-        echo "=== 1. Inspección rápida y Lectura de Variables del Driver ==="
-        ls -la
-        head -n 30 Makefile
+        echo "=== 1. Inyectando soporte de Red Inalámbrica en el Kernel ==="
+        # Añadimos a la fuerza las directivas maestras al archivo de configuración del kernel jalado
+        echo "CONFIG_WLAN=y" >> ../linux-stable/.config
+        echo "CONFIG_CFG80211=m" >> ../linux-stable/.config
+        echo "CONFIG_RTL8188E=m" >> ../linux-stable/.config
         
-        echo "=== 2. Simulacro de Make Forzado con traza ==="
+        # Sincronizamos la configuración interna para que Linux actualice el auto.conf fantasma
+        make -C ../linux-stable ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- olddefconfig
+        
+        echo "=== 2. Lanzando compilación real del Driver Wi-Fi ==="
+        # Ahora que el kernel base acepta Wi-Fi, llamamos a la compilación del módulo
         make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- \
           -C ../linux-stable \
           M=$GITHUB_WORKSPACE/rtl8189es \
-          CONFIG_WLAN=y \
-          CONFIG_CFG80211=m \
-          CONFIG_RTL8188E=m \
-          modules -d | head -n 100
-        
-        echo "=== 3. Intento de Compilación de Producción Forzada ==="
-        # Forzamos la compilación inyectando la variable de objeto modular maestro de Realtek
-        make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- \
-          -C ../linux-stable \
-          M=$GITHUB_WORKSPACE/rtl8189es \
-          CONFIG_WLAN=y \
-          CONFIG_CFG80211=m \
-          CONFIG_RTL8188E=m \
           modules
         
-        echo "=== 4. Rastrear binarios resultantes ==="
-        find . -name "*.ko" -o -name "*.o"
+        echo "=== 3. Rastrear archivos .ko generados ==="
+        find . -name "*.ko"
 
 
     - name: 7. Guardar el archivo .ko listo para el TV Stick
