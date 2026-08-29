@@ -21,16 +21,17 @@ jobs:
         # Clonamos un solo commit apuntando directamente a la etiqueta v6.18.44 usando la dirección exacta requerida
         git clone --depth 1 --branch v6.18.44 https://git.kernel.org/pub/scm/linux/kernel/git/stable/linux.git/ linux-stable
 
-    - name: 4. Generar configuración y Preparar Cabeceras (RÁPIDO)
+    - name: 4. Generar configuración y Compilar Módulos Base (RÁPIDO)
       working-directory: ./linux-stable
       run: |
-        # 1. Generamos la configuración base arm64
+        # 1. Generamos la configuración base arm64 idéntica a tu TV stick
         make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- defconfig
         
-        # 2. Generamos exclusivamente los archivos .h y estructuras de enlace modular en segundos
-        make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- modules_prepare -j$(nproc)
+        # 2. TRUCO CLAVE: Compilamos solo los módulos del sistema. 
+        # Esto genera el archivo Module.symvers completo en un par de minutos sin compilar el kernel Image.
+        make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- modules -j$(nproc)
 
-    - name: 5. Guardar las fuentes estructuradas para los Drivers
+    - name: 5. Guardar las fuentes estructuradas con Module.symvers
       if: success()
       uses: actions/upload-artifact@v4
       with:
