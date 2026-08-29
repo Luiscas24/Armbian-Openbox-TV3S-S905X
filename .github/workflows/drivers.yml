@@ -44,8 +44,8 @@ jobs:
         # 1. Devolvemos permisos de ejecución a los binarios del kernel que GitHub rompió
         chmod +x ../linux-stable/scripts/mod/modpost
         
-        # 2. Forzamos la compilación cruzada inyectando los parámetros en el entorno del Makefile
-        make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- KSRC=../linux-stable -C ../linux-stable M=$(pwd) modules
+        # 2. Compilamos inyectando la ruta absoluta del directorio actual de trabajo de Actions
+        make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- KSRC=../linux-stable -C ../linux-stable M=$GITHUB_WORKSPACE/rtl8189es modules
 
     - name: 7. Guardar el archivo .ko listo para el TV Stick
       if: success()
