@@ -1,6 +1,7 @@
 name: Prueba de Caja de Herramientas TV3s
 
 on:
+  push:         # 👈 Agregamos esto solo para forzar el primer registro
   workflow_dispatch:
 
 jobs:
@@ -11,4 +12,4 @@ jobs:
       uses: actions/checkout@v4
 
     - name: Saludo desde la nube
-      run: echo "¡Infraestructura lista Luiscas24! Próximo paso: Kernel y Realtek."
+      run: echo "Desbloqueando los botones de la web..."
