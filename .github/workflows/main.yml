@@ -1,7 +1,7 @@
 name: "Fase 1: Compilador de Kernel 6.18.44 (S905X)"
 
 on:
-  workflow_dispatch: # Control 100% manual por botón desde la web
+  workflow_dispatch: # Control manual por botón desde la web
 
 jobs:
   build-specific-kernel:
@@ -16,9 +16,9 @@ jobs:
         git clone --depth 1 https://github.com/armbian/build armbian-build
 
     - name: 3. Ejecutar la compilación en limpio
-      working-directory: ./armbian-build # 👈 Le ordena fijar la carpeta físicamente
+      working-directory: ./armbian-build
       env:
-        FORCE_BASH_DATA: "yes" # 👈 Pasamos la variable de forma limpia e institucional
+        FORCE_BASH_DATA: "yes"
       run: |
         ./compile.sh \
           BOARD=lepotato \
@@ -29,3 +29,21 @@ jobs:
           INSTALL_HEADERS=yes \
           KERNEL_GIT_TAG="v6.18.44" \
           kernel
+
+    - name: 4. Guardar paquetes .deb instalables
+      if: always() # Se ejecuta incluso si algo posterior falla
+      uses: actions/upload-artifact@v4
+      with:
+        name: kernel-tv3s-debs
+        path: armbian-build/output/debs/*.deb
+
+    - name: 5. Guardar copia de seguridad de las fuentes compiladas
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: kernel-tv3s-fuentes-compiladas
+        path: |
+          armbian-build/cache/sources/linux-mainline/orange-pi-6.18.44/
+          armbian-build/cache/sources/linux-mainline/linux-6.18.44/
+        # Nota: Ponemos ambas rutas posibles porque Armbian cambia el nombre 
+        # de la carpeta según el parche, asegurando que capture las fuentes.
