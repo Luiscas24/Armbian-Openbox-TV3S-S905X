@@ -1,7 +1,7 @@
 name: "Fase 1: Compilador de Kernel 6.18.44 (S905X)"
 
 on:
-  workflow_dispatch: # Control manual por botón
+  workflow_dispatch: # Control 100% manual por botón
 
 jobs:
   build-specific-kernel:
@@ -13,13 +13,13 @@ jobs:
 
     - name: 2. Preparar entorno y Compilar Kernel 6.18.44
       run: |
-        # 1. Clonamos el framework oficial dentro del paso actual
+        # 1. Clonamos el framework oficial
         git clone --depth 1 https://github.com/armbian/build armbian-build
         
-        # 2. Nos movemos y ejecutamos la compilación de forma inmediata en la misma sesión
+        # 2. Entramos y ejecutamos la compilación sin sudo y con la placa correcta
         cd armbian-build
-        sudo ./compile.sh \
-          BOARD=amlogic-s905x \
+        ./compile.sh \
+          BOARD=lepotato \
           BRANCH=edge \
           RELEASE=bookworm \
           BUILD_MINIMAL=yes \
