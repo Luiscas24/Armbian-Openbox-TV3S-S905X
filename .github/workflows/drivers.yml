@@ -46,7 +46,6 @@ jobs:
         
         echo "=== 1. Inspección rápida y Lectura de Variables del Driver ==="
         ls -la
-        # Imprimimos las primeras 30 líneas del Makefile del driver para auditar sus variables internas
         head -n 30 Makefile
         
         echo "=== 2. Simulacro de Make Forzado con traza ==="
@@ -55,16 +54,17 @@ jobs:
           M=$GITHUB_WORKSPACE/rtl8189es \
           CONFIG_WLAN=y \
           CONFIG_CFG80211=m \
-          CONFIG_RTL8189ES=m \
+          CONFIG_RTL8188E=m \
           modules -d | head -n 100
         
-        echo "=== 3. Intento de Compilación de Producción ==="
+        echo "=== 3. Intento de Compilación de Producción Forzada ==="
+        # Forzamos la compilación inyectando la variable de objeto modular maestro de Realtek
         make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- \
           -C ../linux-stable \
           M=$GITHUB_WORKSPACE/rtl8189es \
           CONFIG_WLAN=y \
           CONFIG_CFG80211=m \
-          CONFIG_RTL8189ES=m \
+          CONFIG_RTL8188E=m \
           modules
         
         echo "=== 4. Rastrear binarios resultantes ==="
