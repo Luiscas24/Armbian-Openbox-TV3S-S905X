@@ -37,24 +37,32 @@ jobs:
       run: |
         git clone --depth 1 https://github.com/jwrdegoede/rtl8189ES_linux rtl8189es
 
-    - name: 6. Restaurar permisos, AUDITAR SÍMBOLOS y Compilar el Módulo Wi-Fi
+    - name: 6. Restaurar permisos, ALINEAR ESTRUCTURAS y Compilar el Módulo Wi-Fi
       working-directory: ./rtl8189es
       run: |
         # 1. Devolvemos permisos masivos a toda la carpeta de scripts
         chmod -R +x ../linux-stable/scripts/
         
-        # 2. Forzamos la alineación de la estructura del Kernel de Armbian
+        # 2. Inyectamos la configuración inalámbrica base
         echo "CONFIG_WLAN=y" >> ../linux-stable/.config
         echo "CONFIG_CFG80211=m" >> ../linux-stable/.config
         
-        # TRUCO DE MEMORIA: Desactivamos la aleatorización y depuraciones que engordan la estructura
+        # 3. 🔬 LIMPIEZA DE ENTORNO: Desactivamos las banderas pesadas que deforman el tamaño de 'struct module'
+        # Desactivamos la aleatorización de estructuras y los rastreadores intrusivos
         sed -i 's/CONFIG_RANDSTRUCT_FULL=y/# CONFIG_RANDSTRUCT_FULL is not set/' ../linux-stable/.config
         sed -i 's/CONFIG_RANDSTRUCT=y/# CONFIG_RANDSTRUCT is not set/' ../linux-stable/.config
+        sed -i 's/CONFIG_KASAN=y/# CONFIG_KASAN is not set/' ../linux-stable/.config
+        sed -i 's/CONFIG_MAXSMP=y/# CONFIG_MAXSMP is not set/' ../linux-stable/.config
         
-        # Forzamos la reconstrucción limpia del plano base
+        # 4. Forzamos la reconstrucción limpia del plano base
         make -C ../linux-stable ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- olddefconfig
         
-        # 3. Lanzamos la compilación cruzada limpia con la LOCALVERSION exacta
+        # 5. 🔍 COMANDO DE DIAGNÓSTICO PRE-COMPILACIÓN (Cero conjeturas)
+        echo "=== AUDITORÍA ESTRUCTURAL DE CABECERAS ==="
+        grep -E "CONFIG_RANDSTRUCT|CONFIG_KASAN|CONFIG_ARM64_.*_PAGES" ../linux-stable/.config || true
+        echo "==========================================="
+        
+        # 6. Lanzamos la compilación cruzada inyectando la LOCALVERSION exacta
         make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- LOCALVERSION=-current-meson64 \
           -C ../linux-stable \
           M=$GITHUB_WORKSPACE/rtl8189es \
