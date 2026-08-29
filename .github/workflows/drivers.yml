@@ -38,40 +38,27 @@ jobs:
       run: |
         git clone --depth 1 https://github.com/jwrdegoede/rtl8189ES_linux rtl8189es
 
-    - name: 6. 🔬 DIAGNÓSTICO PROFUNDO DE EVALUACIÓN DE MAKEFILE
+    - name: 6. 🛠️ COMPILACIÓN MODULAR REALTEK RTL8189ES
       working-directory: ./rtl8189es
       run: |
-        echo "=== 1. Sincronizando entorno del Kernel ==="
+        echo "=== 1. Restaurando permisos ejecutable ==="
         chmod -R +x ../linux-stable/scripts/
+        
+        echo "=== 2. Sincronizando entorno del Kernel ==="
         echo "CONFIG_WLAN=y" >> ../linux-stable/.config
         echo "CONFIG_CFG80211=m" >> ../linux-stable/.config
         make -C ../linux-stable ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- olddefconfig
         
-        echo "=== 2. AUDITORÍA DE TEXTO: ¿Cómo se agrega el objeto del driver? ==="
-        # Buscamos todas las líneas donde el Makefile intenta llenar la variable obj-m
-        grep -n "obj-m" Makefile || true
-        
-        echo "=== 3. AUDITORÍA DE SINTAXIS: ¿Qué plataformas existen en este archivo? ==="
-        # Buscamos todas las condicionales de plataforma que el programador definió
-        grep -n "CONFIG_PLATFORM_" Makefile | head -n 40 || true
-        
-        echo "=== 4. TRAZA DE EJECUCIÓN LÍNEA POR LÍNEA ==="
-        # Ejecutamos make con la bandera --trace para ver qué decisiones toma el motor del compilador en tiempo real
+        echo "=== 3. Lanzando Compilación Forzada de Objeto Modular ==="
+        # Forzamos la población de obj-m con el nombre lógico MODULE_NAME = 8189es que arrojó el diagnóstico
         make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- \
           -C ../linux-stable \
           M=$GITHUB_WORKSPACE/rtl8189es \
-          CONFIG_PLATFORM_I386_PC=n \
-          CONFIG_PLATFORM_ARM_AARCH64=y \
-          modules --trace || true
+          obj-m=8189es.o \
+          modules
         
-        echo "=== 5. VOLCADO DE LA BASE DE DATOS INTERNA DE VARIABLES ==="
-        # Le pedimos a make que nos diga el valor final con el que se quedan las variables clave
-        make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- \
-          -C ../linux-stable \
-          M=$GITHUB_WORKSPACE/rtl8189es \
-          CONFIG_PLATFORM_I386_PC=n \
-          CONFIG_PLATFORM_ARM_AARCH64=y \
-          -p | grep -E "MODULE_NAME|obj-m|8188|8189" | head -n 30 || true
+        echo "=== 4. Rastrear binarios resultantes ==="
+        find . -name "*.ko"
 
     - name: 7. Guardar el archivo .ko listo para el TV Stick
       if: success()
