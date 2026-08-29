@@ -21,7 +21,8 @@ jobs:
       env:
         GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       run: |
-        RUN_ID=$(gh run list --workflow "Fase 1: Compilador de Kernel 6.18.44 Puro (S905X)" --status success --limit 1 --json databaseId --jq '..databaseId')
+        # Cambiamos la expresión jq a la sintaxis estándar de arreglos para evitar errores de parseo
+        RUN_ID=$(gh run list --workflow "Fase 1: Compilador de Kernel 6.18.44 Puro (S905X)" --status success --limit 1 --json databaseId --jq '.[0].databaseId')
         echo "El ID del kernel encontrado es: $RUN_ID"
         echo "kernel_run_id=$RUN_ID" >> $GITHUB_OUTPUT
 
