@@ -44,8 +44,8 @@ jobs:
         # 1. Devolvemos permisos de ejecución a los binarios del kernel que GitHub rompió
         chmod +x ../linux-stable/scripts/mod/modpost
         
-        # 2. Lanzamos la compilación cruzada del driver Wi-Fi
-        make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- -C ../linux-stable M=$(pwd) modules
+        # 2. Forzamos la compilación cruzada inyectando los parámetros en el entorno del Makefile
+        make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- KSRC=../linux-stable -C ../linux-stable M=$(pwd) modules
 
     - name: 7. Guardar el archivo .ko listo para el TV Stick
       if: success()
