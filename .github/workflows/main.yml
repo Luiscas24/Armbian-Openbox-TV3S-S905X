@@ -1,8 +1,6 @@
 name: Prueba de Caja de Herramientas TV3s
 
 on:
-  push:
-    branches: [ "main" ]
   workflow_dispatch:
 
 jobs:
