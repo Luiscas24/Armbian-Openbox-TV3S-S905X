@@ -21,7 +21,8 @@ jobs:
       env:
         GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       run: |
-        RUN_ID=$(gh run list --workflow "Fase 1: Compilador de Kernel 6.18.44 Puro (S905X)" --status success --limit 1 --json databaseId --jq '..databaseId')
+        # Usamos la sintaxis explícita de arreglos .[0].databaseId para blindar el parseo de jq contra fallos
+        RUN_ID=$(gh run list --workflow "Fase 1: Compilador de Kernel 6.18.44 Puro (S905X)" --status success --limit 1 --json databaseId --jq '.[0].databaseId')
         echo "kernel_run_id=$RUN_ID" >> $GITHUB_OUTPUT
 
     - name: 4. 🪄 Jalar fuentes del Kernel desde el historial público
