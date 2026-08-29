@@ -21,14 +21,18 @@ jobs:
         # Clonamos un solo commit apuntando directamente a la etiqueta v6.18.44 usando la dirección exacta requerida
         git clone --depth 1 --branch v6.18.44 https://git.kernel.org/pub/scm/linux/kernel/git/stable/linux.git/ linux-stable
 
-    - name: 4. Generar configuración y Compilar Kernel Completo
+    - name: 4. Inyectar versión local y Compilar Red Base (RÁPIDO)
       working-directory: ./linux-stable
       run: |
         # 1. Generamos la configuración base arm64
         make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- defconfig
         
-        # 2. Compilamos TODO (Núcleo, Módulos y DTBs) a máxima potencia. Esto genera el Module.symvers perfecto.
-        make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- -j$(nproc) Image modules dtbs
+        # 2. Inyectamos la identidad de tu TV stick en la configuración base
+        sed -i 's/CONFIG_LOCALVERSION=""/CONFIG_LOCALVERSION="-current-meson64"/' .config
+        
+        # 3. TRUCO DE VELOCIDAD: Compilamos únicamente el subsistema net/wireless interno.
+        # Esto obliga a modpost a ejecutarse y calcular el Module.symvers real en 2 minutos, omitiendo el resto del kernel.
+        make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- net/wireless/ -j$(nproc)
 
     - name: 5. Guardar el motor del Kernel compilado (Image)
       if: success()
