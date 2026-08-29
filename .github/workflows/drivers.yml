@@ -37,47 +37,51 @@ jobs:
       run: |
         git clone --depth 1 https://github.com/jwrdegoede/rtl8189ES_linux rtl8189es
 
-    - name: 6. Restaurar permisos, AUDITAR SÍMBOLOS y Compilar el Módulo Wi-Fi
+    - name: 6. Restaurar permisos y Compilar el Módulo Wi-Fi con TRAZA DE ERROR
       working-directory: ./rtl8189es
       run: |
-        # 1. Devolvemos permisos a toda la carpeta de scripts
+        # 1. Devolvemos permisos masivos a toda la carpeta de scripts
         chmod -R +x ../linux-stable/scripts/
         
-        # 2. 🔍 AUDITORÍA CIENTÍFICA DEL PARSE ERROR
-        echo "=========================================================="
-        echo "🔬 EXAMINANDO EL CONTENIDO REAL DE Module.symvers:"
-        echo "=========================================================="
-        if [ -f ../linux-stable/Module.symvers ]; then
-          # cat -A muestra caracteres ocultos: los TAB se verán como ^I y los saltos de línea como $
-          echo "-> Estructura de caracteres ocultos (Primeras 15 líneas):"
-          head -n 15 ../linux-stable/Module.symvers | cat -A
-          
-          echo "----------------------------------------------------------"
-          # Contamos si hay espacios comunes en lugar de tabuladores reales
-          ESPACIOS=$(grep -c " " ../linux-stable/Module.symvers || true)
-          echo "-> Líneas con espacios comunes detectadas: $ESPACIOS"
-          
-          echo "----------------------------------------------------------"
-          # Validamos si cumple la regla estricta de modpost (4 campos por línea)
-          echo "-> Validación de campos por línea (Debe haber exactamente 4 por fila):"
-          awk -F'\t' '{print "Fila "NR": tiene "NF" campos. Contenido: "$0}' ../linux-stable/Module.symvers | head -n 15
-        else
-          echo "❌ ERROR CRÍTICO: El archivo Module.symvers no existe en linux-stable."
-        fi
-        echo "=========================================================="
-        
-        # 3. Inyectamos el soporte inalámbrico directo en el plano del kernel
+        # 2. Inyectamos la configuración inalámbrica base
         echo "CONFIG_WLAN=y" >> ../linux-stable/.config
         echo "CONFIG_CFG80211=m" >> ../linux-stable/.config
         make -C ../linux-stable ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- olddefconfig
         
-        # 4. Lanzamos la compilación cruzada inyectando la LOCALVERSION exacta
+        # 3. 🔬 TRAZA DE INSPECCIÓN DE EMERGENCIA
+        echo "=========================================================="
+        echo "📸 FOTO ANTES DE LA COMPILACIÓN (¿Qué hay en el archivo?):"
+        echo "=========================================================="
+        if [ -f ../linux-stable/Module.symvers ]; then
+          cat -A ../linux-stable/Module.symvers | head -n 10
+        else
+          echo "⚠️ Module.symvers NO EXISTE antes de compilar."
+        fi
+        echo "=========================================================="
+        
+        # 4. Lanzamos la compilación guardando la salida del error en un log para que no se pierda
+        # Si falla, el script ejecutará el bloque de abajo mostrando la radiografía exacta del archivo corrupto
         make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- LOCALVERSION=-current-meson64 \
           -C ../linux-stable \
           M=$GITHUB_WORKSPACE/rtl8189es \
           obj-m=8189es.o \
-          modules
-
+          modules || {
+            echo "=========================================================="
+            echo "🚨 ALERTA: COMPILACIÓN ROTA. DUMPING DE Module.symvers CORRUPTO:"
+            echo "=========================================================="
+            if [ -f ../linux-stable/Module.symvers ]; then
+              echo "-> Caracteres ocultos reales (cat -A):"
+              cat -A ../linux-stable/Module.symvers
+              echo "----------------------------------------------------------"
+              echo "-> Conteo de líneas y espacios:"
+              wc -l ../linux-stable/Module.symvers
+              grep -c " " ../linux-stable/Module.symvers || true
+            else
+              echo "❌ El archivo fue borrado físicamente por el Makefile."
+            fi
+            echo "=========================================================="
+            exit 2
+          }
 
     - name: 7. Guardar el archivo .ko listo para el TV Stick
       if: success()
