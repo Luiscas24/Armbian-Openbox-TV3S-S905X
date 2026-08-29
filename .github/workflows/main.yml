@@ -1,7 +1,7 @@
 name: "Fase 1: Compilador de Kernel 6.18.44 (S905X)"
 
 on:
-  workflow_dispatch: # Control manual
+  workflow_dispatch: # Control 100% manual por botón desde la web
 
 jobs:
   build-specific-kernel:
@@ -20,6 +20,7 @@ jobs:
       env:
         FORCE_BASH_DATA: "yes"
       run: |
+        # Inyectamos la URL larga del árbol estable y su rama correspondiente de forma estricta
         ./compile.sh \
           BOARD=lepotato \
           BRANCH=edge \
@@ -29,11 +30,12 @@ jobs:
           INSTALL_HEADERS=yes \
           DOCKER=no \
           KERNEL_GIT_TAG="v6.18.44" \
+          KERNELBRANCH="linux-6.18.y" \
           KERNELSOURCE="https://kernel.org" \
           kernel
 
     - name: 4. Guardar paquetes .deb instalables
-      if: success() # Solo si la compilación fue exitosa
+      if: success()
       uses: actions/upload-artifact@v4
       with:
         name: kernel-tv3s-debs
@@ -49,7 +51,7 @@ jobs:
           armbian-build/cache/sources/linux-mainline/
 
     - name: 6. 🚨 CAPTURAR LOG EN CASO DE FALLO
-      if: failure() # 👈 ¡ESTA ES LA MAGIA! Se ejecuta SOLO si el paso 3 falla
+      if: failure()
       uses: actions/upload-artifact@v4
       with:
         name: reporte-de-error-armbian
