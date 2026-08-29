@@ -25,23 +25,21 @@ jobs:
         # Nos paramos de forma estricta en el tag que acabamos de validar en la terminal
         git checkout tags/v6.18.44 -b rama-6.18.44
 
-    - name: 4. Generar configuración y Compilar Kernel
+    - name: 4. Generar configuración y Preparar Cabeceras (RÁPIDO)
       working-directory: ./linux-stable
       run: |
-        # 1. Generamos la configuración por defecto para procesadores ARM64
+        # 1. Generamos la configuración base arm64 idéntica a tu TV stick
         make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- defconfig
         
-        # 2. Compilamos el kernel, módulos y dtbs a máxima potencia en la nube
-        make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- -j$(nproc) Image modules dtbs
+        # 2. TRUCO CLAVE: Prepara scripts, estructuras y cabeceras de enlace en segundos sin compilar el kernel vmlinux
+        make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- modules_prepare -j$(nproc)
 
-    - name: 5. Guardar el motor del Kernel compilado (Image)
+    - name: 5. Guardar las fuentes estructuradas para los Drivers
       if: success()
       uses: actions/upload-artifact@v4
       with:
-        name: kernel-tv3s-binario-puro
-        path: |
-          linux-stable/arch/arm64/boot/Image
-          linux-stable/arch/arm64/boot/dts/amlogic/*.dtb
+        name: kernel-tv3s-fuentes-y-headers
+        path: linux-stable/
 
     - name: 6. Guardar las fuentes completas con sus cabeceras para los Drivers
       if: success()
