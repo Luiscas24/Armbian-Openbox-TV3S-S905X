@@ -43,7 +43,6 @@ jobs:
       run: |
         # 1. Devolvemos permisos de ejecución a los binarios del kernel que GitHub rompió
         chmod +x ../linux-stable/scripts/mod/modpost
-        chmod +x ../linux-stable/scripts/recordmcount
         
         # 2. Lanzamos la compilación cruzada del driver Wi-Fi
         make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- -C ../linux-stable M=$(pwd) modules
