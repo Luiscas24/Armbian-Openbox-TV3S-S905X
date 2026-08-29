@@ -52,4 +52,4 @@ jobs:
       uses: actions/upload-artifact@v4
       with:
         name: driver-wifi-rtl8189es
-        path: rtl8189es/*.ko
+        path: rtl8189es/**/*.ko # 👈 Los asteriscos buscan en todas las subcarpetas de forma recursiva
