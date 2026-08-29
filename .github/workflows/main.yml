@@ -17,7 +17,7 @@ jobs:
         git clone --depth 1 https://github.com/armbian/build armbian-build
         
         # 2. Entramos y ejecutamos la compilación sin sudo y con la placa correcta
-        cd armbian-build
+        FORCE_BASH_DATA="yes" ./compile.sh \
         ./compile.sh \
           BOARD=lepotato \
           BRANCH=edge \
