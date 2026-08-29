@@ -1,7 +1,7 @@
 name: "Fase 1: Compilador de Kernel 6.18.44 (S905X)"
 
 on:
-  workflow_dispatch: # Control 100% manual
+  workflow_dispatch: # Control 100% manual por botón desde la web
 
 jobs:
   build-specific-kernel:
@@ -13,14 +13,14 @@ jobs:
 
     - name: 2. Clonar el framework oficial de Armbian
       run: |
-        git clone --depth 1 https://github.com/armbian/build armbian-build
+        git clone --depth 1 https://github.com armbian-build
 
-    - name: 3. Ejecutar la compilación forzada a 6.18.44
+    - name: 3. Ejecutar la compilación nativa forzada a 6.18.44
       working-directory: ./armbian-build
       env:
         FORCE_BASH_DATA: "yes"
       run: |
-        # Usamos los parámetros estructurales para forzar la descarga de la rama y tag específicos
+        # Desactivamos Docker para compilar en crudo sobre el servidor y acelerar el proceso
         ./compile.sh \
           BOARD=lepotato \
           BRANCH=edge \
@@ -28,6 +28,7 @@ jobs:
           BUILD_MINIMAL=yes \
           KERNEL_CONFIGURE=no \
           INSTALL_HEADERS=yes \
+          DOCKER=no \
           KERNEL_GIT_TAG="v6.18.44" \
           KERNELSOURCE="https://kernel.org" \
           kernel
