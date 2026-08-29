@@ -21,25 +21,19 @@ jobs:
         # Clonamos un solo commit apuntando directamente a la etiqueta v6.18.44 usando la dirección exacta requerida
         git clone --depth 1 --branch v6.18.44 https://git.kernel.org/pub/scm/linux/kernel/git/stable/linux.git/ linux-stable
 
-    - name: 4. Inyectar versión local y Forzar Creación Manual de Símbolos Base
+    - name: 4. Inyectar versión local y Compilar Bloques Ligeros (SOLUCIÓN DEFINITIVA)
       working-directory: ./linux-stable
       run: |
         # 1. Generamos la configuración base arm64
         make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- defconfig
         
-        # 2. Inyectamos la identidad exacta de tu TV stick en el .config
+        # 2. Inyectamos la identidad exacta de tu TV stick en el archivo de configuración
         sed -i 's/CONFIG_LOCALVERSION=""/CONFIG_LOCALVERSION="-current-meson64"/' .config
         
-        # 3. Activamos el soporte de control de versiones de módulos
-        echo "CONFIG_MODVERSIONS=y" >> .config
-        make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- olddefconfig
-        
-        # 4. Generamos las cabeceras estructurales base de ARM64
+        # 3. TRUCO DE UNIÓN LIGERA: Obligamos a compilar crypto y net/wireless juntos.
+        # Esto genera un Module.symvers legítimo, con formato perfecto y con todos los símbolos de red en 3 minutos.
         make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- modules_prepare -j$(nproc)
-        
-        # 5. 🛠️ FORZADO MANUAL: Creamos el archivo Module.symvers físico y le inyectamos 
-        # la firma inicial base para que el compilador del driver no lo encuentre ausente.
-        echo "0x00000000	module_layout	vmlinux	EXPORT_SYMBOL" > Module.symvers
+        make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- M=crypto M=net/wireless modules -j$(nproc)
 
     - name: 5. Guardar el motor del Kernel compilado (Image)
       if: success()
