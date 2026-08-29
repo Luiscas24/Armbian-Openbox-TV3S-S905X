@@ -21,19 +21,29 @@ jobs:
         # Clonamos un solo commit apuntando directamente a la etiqueta v6.18.44 usando la dirección exacta requerida
         git clone --depth 1 --branch v6.18.44 https://git.kernel.org/pub/scm/linux/kernel/git/stable/linux.git/ linux-stable
 
-    - name: 4. Inyectar versión local y Compilar Bloques Ligeros (SOLUCIÓN DEFINITIVA)
+    - name: 4. Inyectar versión local e Integrar Módulos de Red (RÁPIDO)
       working-directory: ./linux-stable
       run: |
         # 1. Generamos la configuración base arm64
         make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- defconfig
         
-        # 2. Inyectamos la identidad exacta de tu TV stick en el archivo de configuración
+        # 2. Inyectamos la identidad exacta de tu TV stick en la configuración
         sed -i 's/CONFIG_LOCALVERSION=""/CONFIG_LOCALVERSION="-current-meson64"/' .config
         
-        # 3. TRUCO DE UNIÓN LIGERA: Obligamos a compilar crypto y net/wireless juntos.
-        # Esto genera un Module.symvers legítimo, con formato perfecto y con todos los símbolos de red en 3 minutos.
+        # 3. TRUCO DE INTEGRACIÓN: Forzamos a que el subsistema de red e inalámbrico 
+        # se integren al núcleo (=y) en lugar de ser módulos (=m). Esto unifica los símbolos.
+        sed -i 's/CONFIG_CFG80211=m/CONFIG_CFG80211=y/' .config
+        sed -i 's/CONFIG_MAC80211=m/CONFIG_MAC80211=y/' .config
+        echo "CONFIG_NET=y" >> .config
+        echo "CONFIG_WLAN=y" >> .config
+        
+        # 4. Actualizamos el plano de configuración y preparamos las cabeceras base de ARM64
+        make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- olddefconfig
         make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- modules_prepare -j$(nproc)
-        make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- M=crypto M=net/wireless modules -j$(nproc)
+        
+        # 5. Compilamos el subsistema de red inalámbrico. Ahora, al estar integrado, 
+        # modpost generará el Module.symvers impecable con todos los símbolos de red en 3 minutos.
+        make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- net/wireless/ -j$(nproc)
 
     - name: 5. Guardar el motor del Kernel compilado (Image)
       if: success()
