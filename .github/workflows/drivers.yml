@@ -16,25 +16,34 @@ jobs:
         sudo apt-get update
         sudo apt-get install -y gcc-aarch64-linux-gnu build-essential bc bison flex kmod
 
-    - name: 3. 🪄 Jalar fuentes compiladas del Kernel anterior
+    - name: 3. 🔍 Localizar última ejecución exitosa del Kernel
+      id: locate-kernel
+      env:
+        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      run: |
+        # Interrogamos a la API de GitHub para buscar el ID de la última compilación exitosa del pipeline del kernel
+        RUN_ID=$(gh run list --workflow "Fase 1: Compilador de Kernel 6.18.44 Puro (S905X)" --status success --limit 1 --json databaseId --jq '.[0].databaseId')
+        echo "El ID del kernel encontrado es: $RUN_ID"
+        echo "kernel_run_id=$RUN_ID" >> $GITHUB_OUTPUT
+
+    - name: 4. 🪄 Jalar fuentes del Kernel desde el historial público
       uses: actions/download-artifact@v4
       with:
         name: kernel-tv3s-fuentes-y-headers
         path: linux-stable
+        run-id: ${{ steps.locate-kernel.outputs.kernel_run_id }} # 👈 Le pasamos el ID dinámico que encontramos
         github-token: ${{ secrets.GITHUB_TOKEN }}
 
-    - name: 4. Clonar el repositorio oficial del Driver RTL8189ES
+    - name: 5. Clonar el repositorio oficial del Driver RTL8189ES
       run: |
-        # Clonamos el repositorio exacto que encontraste directamente en la nube
         git clone --depth 1 https://github.com/jwrdegoede/rtl8189ES_linux rtl8189es
 
-    - name: 5. Compilar el Módulo Wi-Fi para ARM64
+    - name: 6. Compilar el Módulo Wi-Fi para ARM64
       working-directory: ./rtl8189es
       run: |
-        # Usamos el Makefile oficial del driver apuntando a las cabeceras de tu kernel 6.18.44
         make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- -C ../linux-stable M=$(pwd) modules
 
-    - name: 6. Guardar el archivo .ko listo para el TV Stick
+    - name: 7. Guardar el archivo .ko listo para el TV Stick
       if: success()
       uses: actions/upload-artifact@v4
       with:
