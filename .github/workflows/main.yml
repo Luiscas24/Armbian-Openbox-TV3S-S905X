@@ -14,7 +14,7 @@ jobs:
     - name: 2. Preparar entorno y Compilar Kernel 6.18.44
       run: |
         # 1. Clonamos el framework oficial dentro del paso actual
-        git clone --depth 1 https://github.com/armbian/build
+        git clone --depth 1 https://github.com/armbian/build armbian-build
         
         # 2. Nos movemos y ejecutamos la compilación de forma inmediata en la misma sesión
         cd armbian-build
