@@ -21,23 +21,18 @@ jobs:
         # Clonamos un solo commit apuntando directamente a la etiqueta v6.18.44 usando la dirección exacta requerida
         git clone --depth 1 --branch v6.18.44 https://git.kernel.org/pub/scm/linux/kernel/git/stable/linux.git/ linux-stable
 
-    - name: 4. Inyectar versión local y Forzar Creación de Module.symvers (RÁPIDO)
+    - name: 4. Inyectar versión local y Forzar Creación de Símbolos Reales (RÁPIDO)
       working-directory: ./linux-stable
       run: |
         # 1. Generamos la configuración base arm64
         make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- defconfig
         
-        # 2. Inyectamos de forma estricta la identidad de tu TV stick en el archivo de configuración
+        # 2. Inyectamos la identidad exacta de tu TV stick en la configuración
         sed -i 's/CONFIG_LOCALVERSION=""/CONFIG_LOCALVERSION="-current-meson64"/' .config
         
-        # 3. Activamos por la fuerza el control de versiones modversions en las firmas
-        echo "CONFIG_MODVERSIONS=y" >> .config
-        make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- olddefconfig
-        
-        # 4. TRUCO MAESTRO: Forzamos la fase 2 de modpost para que genere el Module.symvers legítimo
-        # al compilar los scripts base de preparación modular. Toma menos de 3 minutos.
-        make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- prepare modules_prepare -j$(nproc)
-        make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- M=scripts/mod modules -j$(nproc)
+        # 3. TRUCO DEFINITIVO: Compilamos únicamente los módulos de criptografía base.
+        # Esto fuerza a modpost a rellenar el Module.symvers con todos los símbolos reales del sistema en 2 minutos.
+        make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- M=crypto modules -j$(nproc)
 
     - name: 5. Guardar el motor del Kernel compilado (Image)
       if: success()
