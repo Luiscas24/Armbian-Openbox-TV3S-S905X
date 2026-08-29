@@ -1,0 +1,16 @@
+name: Prueba de Caja de Herramientas TV3s
+
+on:
+  push:
+    branches: [ "main" ]
+  workflow_dispatch:
+
+jobs:
+  test-environment:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Clonar codigo
+      uses: actions/checkout@v4
+
+    - name: Saludo desde la nube
+      run: echo "¡Infraestructura lista Luiscas24! Próximo paso: Kernel y Realtek."
