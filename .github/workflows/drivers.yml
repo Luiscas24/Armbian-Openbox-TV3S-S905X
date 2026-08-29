@@ -54,3 +54,9 @@ jobs:
           M=$GITHUB_WORKSPACE/rtl8189es \
           obj-m=8189es.o \
           modules
+    - name: 7. Guardar el archivo .ko listo para el TV Stick
+      if: success()
+      uses: actions/upload-artifact@v4
+      with:
+        name: driver-wifi-rtl8189es
+        path: rtl8189es/**/*.ko
