@@ -21,17 +21,25 @@ jobs:
         # Clonamos un solo commit apuntando directamente a la etiqueta v6.18.44 usando la dirección exacta requerida
         git clone --depth 1 --branch v6.18.44 https://git.kernel.org/pub/scm/linux/kernel/git/stable/linux.git/ linux-stable
 
-    - name: 4. Generar configuración y Compilar Módulos Base (RÁPIDO)
+    - name: 4. Generar configuración y Compilar Kernel Completo
       working-directory: ./linux-stable
       run: |
-        # 1. Generamos la configuración base arm64 idéntica a tu TV stick
+        # 1. Generamos la configuración base arm64
         make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- defconfig
         
-        # 2. TRUCO CLAVE: Compilamos solo los módulos del sistema. 
-        # Esto genera el archivo Module.symvers completo en un par de minutos sin compilar el kernel Image.
-        make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- modules -j$(nproc)
+        # 2. Compilamos TODO (Núcleo, Módulos y DTBs) a máxima potencia. Esto genera el Module.symvers perfecto.
+        make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- -j$(nproc) Image modules dtbs
 
-    - name: 5. Guardar las fuentes estructuradas con Module.symvers
+    - name: 5. Guardar el motor del Kernel compilado (Image)
+      if: success()
+      uses: actions/upload-artifact@v4
+      with:
+        name: kernel-tv3s-binario-puro
+        path: |
+          linux-stable/arch/arm64/boot/Image
+          linux-stable/arch/arm64/boot/dts/amlogic/*.dtb
+
+    - name: 6. Guardar las fuentes completas con sus cabeceras para los Drivers
       if: success()
       uses: actions/upload-artifact@v4
       with:
