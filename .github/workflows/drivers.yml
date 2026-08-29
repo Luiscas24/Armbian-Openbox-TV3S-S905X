@@ -38,25 +38,35 @@ jobs:
       run: |
         git clone --depth 1 https://github.com/jwrdegoede/rtl8189ES_linux rtl8189es
 
-    - name: 6. 🔍 DIAGNÓSTICO Y COMPILACIÓN CRÍTICA
+    - name: 6. 🔍 DIAGNÓSTICO Y COMPILACIÓN FORZADA
       working-directory: ./rtl8189es
       run: |
         # 1. Devolvemos permisos a modpost
         chmod +x ../linux-stable/scripts/mod/modpost
         
-        echo "=== 1. Inspección de archivos en el directorio del Driver ==="
+        echo "=== 1. Inspección rápida de control ==="
         ls -la
         
-        echo "=== 2. Simulacro de Make con traza de dependencias ==="
-        # Tiramos make con -d (debug completo) pero solo las primeras 100 líneas para ver qué bandera lo apaga
-        make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- -C ../linux-stable M=$GITHUB_WORKSPACE/rtl8189es modules -d | head -n 100
+        echo "=== 2. Simulacro de Make Forzado con traza ==="
+        # Simulamos inyectando los parámetros de red para ver si jq/make aceptan el cambio
+        make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- \
+          -C ../linux-stable \
+          M=$GITHUB_WORKSPACE/rtl8189es \
+          CONFIG_WLAN=y \
+          CONFIG_CFG80211=m \
+          CONFIG_RTL8189ES=m \
+          modules -d | head -n 100
         
-        echo "=== 3. Intento de Compilación Forzada ==="
-        # Intentamos compilar limpiando la caché interna del Makefile
-        make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- -C ../linux-stable M=$GITHUB_WORKSPACE/rtl8189es clean
-        make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- -C ../linux-stable M=$GITHUB_WORKSPACE/rtl8189es modules
+        echo "=== 3. Intento de Compilación de Producción ==="
+        make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- \
+          -C ../linux-stable \
+          M=$GITHUB_WORKSPACE/rtl8189es \
+          CONFIG_WLAN=y \
+          CONFIG_CFG80211=m \
+          CONFIG_RTL8189ES=m \
+          modules
         
-        echo "=== 4. Rastrear si se generó CUALQUIER archivo nuevo ==="
+        echo "=== 4. Rastrear binarios resultantes ==="
         find . -name "*.ko" -o -name "*.o"
 
 
