@@ -1,7 +1,7 @@
 name: "Fase 1: Compilador de Kernel 6.18.44 Puro (S905X)"
 
 on:
-  workflow_dispatch: # Control 100% manual
+  workflow_dispatch: # Control 100% manual por botón desde la web
 
 jobs:
   build-pure-kernel:
@@ -16,10 +16,14 @@ jobs:
         sudo apt-get update
         sudo apt-get install -y gcc-aarch64-linux-gnu build-essential bc bison flex libssl-dev libelf-dev kmod
 
-    - name: 3. Clonar el Kernel Estable 6.18.44 en Limpio
+    - name: 3. Clonar el repositorio oficial de Git Kernel
       run: |
-        # Clonamos únicamente la rama 6.18 directamente de git.kernel.org
-        git clone --depth 1 --branch linux-6.18.y https://kernel.org linux-stable
+        # Clonamos usando la URL larga exacta para evitar redirecciones raras
+        git clone --depth 1 https://git.kernel.org/pub/scm/linux/kernel/git/stable/linux.git linux-stable
+        
+        # Entramos y forzamos el cambio a la rama estable 6.18
+        cd linux-stable
+        git checkout linux-6.18.y
 
     - name: 4. Generar configuración y Compilar Kernel
       working-directory: ./linux-stable
@@ -27,7 +31,7 @@ jobs:
         # 1. Generamos la configuración por defecto para procesadores ARM64
         make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- defconfig
         
-        # 2. Compilamos el kernel, los módulos y los archivos de mapa (DTB) a máxima potencia
+        # 2. Compilamos el kernel a máxima potencia en la nube
         make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- -j$(nproc) Image modules dtbs
 
     - name: 5. Guardar el motor del Kernel compilado (Image)
