@@ -44,11 +44,12 @@ jobs:
         # 1. Devolvemos permisos a modpost
         chmod +x ../linux-stable/scripts/mod/modpost
         
-        echo "=== 1. Inspección rápida de control ==="
+        echo "=== 1. Inspección rápida y Lectura de Variables del Driver ==="
         ls -la
+        # Imprimimos las primeras 30 líneas del Makefile del driver para auditar sus variables internas
+        head -n 30 Makefile
         
         echo "=== 2. Simulacro de Make Forzado con traza ==="
-        # Simulamos inyectando los parámetros de red para ver si jq/make aceptan el cambio
         make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- \
           -C ../linux-stable \
           M=$GITHUB_WORKSPACE/rtl8189es \
