@@ -24,53 +24,51 @@ jobs:
     - name: 4. Generar configuración, Activar Módulos y Compilar Kernel Completo
       working-directory: ./linux-stable
       run: |
-        # 1. Generamos la configuración base arm64
+        # [Tus configuraciones base de Makefile y sed para CONFIG_MODULES se quedan igual...]
         make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- defconfig
-        
-        # 2. INYECTAMOS EL SUFIJO REAL DE TU TV STICK
         sed -i 's/CONFIG_LOCALVERSION=""/CONFIG_LOCALVERSION="-current-meson64"/' .config
-        
-        # 3. CORRECCIÓN CRUCIAL: Forzamos la activación de módulos externos y descarga en caliente
         sed -i 's/# CONFIG_MODULES is not set/CONFIG_MODULES=y/' .config
         grep -q "CONFIG_MODULES=y" .config || echo "CONFIG_MODULES=y" >> .config
         echo "CONFIG_MODULE_UNLOAD=y" >> .config
         echo "CONFIG_MODVERSIONS=y" >> .config
-        
-        # Sincronizamos los cambios para asegurar que el plano de configuración sea consistente
         make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- olddefconfig
         
-        # =========================================================================
-        # AUTOMATIZACIÓN DE ARRANQUE PARA TV STICK (TRUCO DEPOSTINST)
-        # =========================================================================
-        # Creamos la carpeta de plantillas de Debian si no existe
+        # Creamos las carpetas de empaquetado si no existen
         mkdir -p scripts/package/debian
         
-        # Inyectamos el comando de descompresión automática que correrá el TV Stick tras instalar el .deb
+        # =========================================================================
+        # 🛡️ LA JUGADA MAESTRA: EVITAR EL ERROR DE ENLACES DUROS EN FAT32 (CONEMEN)
+        # =========================================================================
+        # Creamos una regla interna para que dpkg no intente hacer hard links de respaldo
+        # al sobreescribir archivos viejos de la misma versión.
+        cat << 'EOF' > scripts/package/debian/conffiles
+        /boot/System.map-6.18.48-current-meson64
+        /boot/config-6.18.48-current-meson64
+        /boot/vmlinuz-6.18.48-current-meson64
+        EOF
+        
+        # =========================================================================
+        # AUTOMATIZACIÓN DE ARRANQUE PARA TV STICK (POSTINST)
+        # =========================================================================
         cat << 'EOF' > scripts/package/debian/postinst
         #!/bin/sh
         set -e
         if [ "$1" = "configure" ]; then
             echo "===================================================="
-            echo "🔧 OPTIMIZACIÓN DE BOT PARA TV STICK (S905X) 🔧"
+            echo "🔧 OPTIMIZACIÓN DE BOOT PARA TV STICK (S905X) 🔧"
             echo "Extrayendo Image pura desde vmlinuz-6.18.48..."
             echo "===================================================="
             cd /boot
-            # Resguardamos el anterior por si acaso
             [ -f Image ] && mv Image Image.bak || true
-            # Descomprimimos el nuevo kernel directamente al nombre que busca el U-Boot
             tail -c +25 vmlinuz-6.18.48-current-meson64 | gunzip > Image
             chmod +x Image
             echo "✅ ¡Arranque actualizado con éxito para el Kernel Fantasma!"
         fi
         EOF
         chmod +x scripts/package/debian/postinst
-        # =========================================================================
 
-        # 4. COMPILACIÓN ESTRUCTURADA TRADICIONAL Y GENERACIÓN DE .DEB SIMULTÁNEA
-        # Compilamos primero el árbol clásico para asegurar Image, dtbs y fuentes completas
+        # Compilación tradicional y generación simultánea de los .deb
         make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- -j$(nproc) Image modules dtbs
-        
-        # Inmediatamente después empaquetamos en .deb oficiales
         make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- -j$(nproc) bindeb-pkg DPKG_FLAGS="-d"
 
     - name: 5. Guardar el motor del Kernel compilado tradicional (Image y DTBs)
