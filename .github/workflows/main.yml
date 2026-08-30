@@ -44,7 +44,8 @@ jobs:
         make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- -j$(nproc) Image modules dtbs
         
         # Inmediatamente después empaquetamos en .deb oficiales para tener los instaladores listos
-        make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- -j$(nproc) bindeb-pkg
+        # CAMBIO AQUÍ: Se añade DPKG_FLAGS="-d" para ignorar el bloqueo de dependencias cruzadas
+        make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- -j$(nproc) bindeb-pkg DPKG_FLAGS="-d"
 
     - name: 5. Guardar el motor del Kernel compilado tradicional (Image y DTBs)
       if: success()
