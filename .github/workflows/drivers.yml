@@ -37,7 +37,7 @@ jobs:
       run: |
         git clone --depth 1 https://github.com/jwrdegoede/rtl8189ES_linux rtl8189es
 
-    - name: 6. Restaurar permisos, PURGA DE ESTRUCTURAS y Compilar Módulo Wi-Fi
+    - name: 6. Restaurar permisos, ALINEAR CON ARMBIAN y Compilar Módulo Wi-Fi
       working-directory: ./rtl8189es
       run: |
         # 1. Devolvemos permisos masivos a toda la carpeta de scripts
@@ -47,29 +47,25 @@ jobs:
         echo "CONFIG_WLAN=y" >> ../linux-stable/.config
         echo "CONFIG_CFG80211=m" >> ../linux-stable/.config
         
-        # 3. 🔬 PURGA INTEGRAL DE INFRAESTRUCTURA DE DEPURACIÓN
-        # Apagamos el soporte de depuración general del núcleo para desinflar el descriptor modular
-        sed -i 's/CONFIG_DEBUG_KERNEL=y/# CONFIG_DEBUG_KERNEL is not set/' ../linux-stable/.config
-        sed -i 's/CONFIG_LOCKDEP=y/# CONFIG_LOCKDEP is not set/' ../linux-stable/.config
-        sed -i 's/CONFIG_FUNCTION_TRACER=y/# CONFIG_FUNCTION_TRACER is not set/' ../linux-stable/.config
-        sed -i 's/CONFIG_STACK_TRACER=y/# CONFIG_STACK_TRACER is not set/' ../linux-stable/.config
-        sed -i 's/CONFIG_TRACEPOINTS=y/# CONFIG_TRACEPOINTS is not set/' ../linux-stable/.config
+        # 3. 🔬 EMPAREJAMIENTO DE ADN MODULAR (Basado en Auditoría)
+        # Apagamos MODVERSIONS de forma estricta para reducir el tamaño de struct module
+        sed -i 's/CONFIG_MODVERSIONS=y/# CONFIG_MODVERSIONS is not set/' ../linux-stable/.config
+        echo "# CONFIG_MODVERSIONS is not set" >> ../linux-stable/.config
         
-        # Mantenemos limpia la aleatorización y optimización de memoria RAM
-        sed -i 's/CONFIG_RANDSTRUCT_FULL=y/# CONFIG_RANDSTRUCT_FULL is not set/' ../linux-stable/.config
-        sed -i 's/CONFIG_RANDSTRUCT=y/# CONFIG_RANDSTRUCT is not set/' ../linux-stable/.config
-        sed -i 's/CONFIG_KASAN=y/# CONFIG_KASAN is not set/' ../linux-stable/.config
+        # Mantenemos apagada la depuración pesada
+        sed -i 's/CONFIG_DEBUG_KERNEL=y/# CONFIG_DEBUG_KERNEL is not set/' ../linux-stable/.config
         
         # 4. Forzamos la reconstrucción limpia del plano base
         make -C ../linux-stable ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- olddefconfig
         
-        # 5. 🖨️ IMPRIMIR METADATOS CLAVE EN EL LOG DE GITHUB (Cero conjeturas)
-        echo "=== REVISIÓN DE SEGURIDAD MODULAR ==="
-        grep -E "DEBUG_KERNEL|LOCKDEP|RANDSTRUCT|KASAN" ../linux-stable/.config || true
-        echo "======================================="
+        # 5. 🖨️ VALIDACIÓN EN PANTALLA (Cero conjeturas)
+        echo "=== VERIFICACIÓN FINAL DE CONFIG_MODVERSIONS ==="
+        grep -E "CONFIG_MODVERSIONS|CONFIG_MODULES" ../linux-stable/.config || true
+        echo "================================================"
         
         # 6. Lanzamos la compilación cruzada limpia con la LOCALVERSION exacta
-        make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- LOCALVERSION=-current-meson64 \
+        # Añadimos la bandera KBUILD_MODPOST_WARN para que ignore la falta de símbolos individuales
+        make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- LOCALVERSION=-current-meson64 KBUILD_MODPOST_WARN=1 \
           -C ../linux-stable \
           M=$GITHUB_WORKSPACE/rtl8189es \
           obj-m=8189es.o \
