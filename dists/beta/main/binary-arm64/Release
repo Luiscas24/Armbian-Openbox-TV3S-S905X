@@ -2,4 +2,4 @@ Component: main
 Origin: Kernel-Fantasma-Provider
 Label: Repositorio de Pruebas del Kernel Fantasma
 Architecture: arm64
-Description: Canal de Pre-releases y Betas funcionales del Kernel Fantasma
+Description: Canal de Pre-releases y Betas funcionales del Kernel para Amlogic S905X
