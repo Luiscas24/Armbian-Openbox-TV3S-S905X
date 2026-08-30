@@ -47,26 +47,25 @@ jobs:
         echo "CONFIG_WLAN=y" >> ../linux-stable/.config
         echo "CONFIG_CFG80211=m" >> ../linux-stable/.config
         
-        # 3. 🔬 PURGA MASIVA DE CONDICIONES QUE ENGORDAN 'struct module'
-        # Desactivamos rastreadores de funciones y bloqueos (Modifican el descriptor del módulo)
+        # 3. 🔬 PURGA INTEGRAL DE INFRAESTRUCTURA DE DEPURACIÓN
+        # Apagamos el soporte de depuración general del núcleo para desinflar el descriptor modular
+        sed -i 's/CONFIG_DEBUG_KERNEL=y/# CONFIG_DEBUG_KERNEL is not set/' ../linux-stable/.config
+        sed -i 's/CONFIG_LOCKDEP=y/# CONFIG_LOCKDEP is not set/' ../linux-stable/.config
         sed -i 's/CONFIG_FUNCTION_TRACER=y/# CONFIG_FUNCTION_TRACER is not set/' ../linux-stable/.config
         sed -i 's/CONFIG_STACK_TRACER=y/# CONFIG_STACK_TRACER is not set/' ../linux-stable/.config
         sed -i 's/CONFIG_TRACEPOINTS=y/# CONFIG_TRACEPOINTS is not set/' ../linux-stable/.config
-        sed -i 's/CONFIG_LOCKDEP=y/# CONFIG_LOCKDEP is not set/' ../linux-stable/.config
         
-        # Desactivamos estadísticas avanzadas y aleatorización que cambian tamaños en bytes
+        # Mantenemos limpia la aleatorización y optimización de memoria RAM
         sed -i 's/CONFIG_RANDSTRUCT_FULL=y/# CONFIG_RANDSTRUCT_FULL is not set/' ../linux-stable/.config
         sed -i 's/CONFIG_RANDSTRUCT=y/# CONFIG_RANDSTRUCT is not set/' ../linux-stable/.config
         sed -i 's/CONFIG_KASAN=y/# CONFIG_KASAN is not set/' ../linux-stable/.config
-        sed -i 's/CONFIG_MODULE_SRCVERSION_ALL=y/# CONFIG_MODULE_SRCVERSION_ALL is not set/' ../linux-stable/.config
-        sed -i 's/CONFIG_LIVEPATCH=y/# CONFIG_LIVEPATCH is not set/' ../linux-stable/.config
         
         # 4. Forzamos la reconstrucción limpia del plano base
         make -C ../linux-stable ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- olddefconfig
         
         # 5. 🖨️ IMPRIMIR METADATOS CLAVE EN EL LOG DE GITHUB (Cero conjeturas)
         echo "=== REVISIÓN DE SEGURIDAD MODULAR ==="
-        grep -E "TRACER|TRACEPOINT|LOCKDEP|RANDSTRUCT|KASAN|MODULE_SRCVERSION|LIVEPATCH" ../linux-stable/.config || true
+        grep -E "DEBUG_KERNEL|LOCKDEP|RANDSTRUCT|KASAN" ../linux-stable/.config || true
         echo "======================================="
         
         # 6. Lanzamos la compilación cruzada limpia con la LOCALVERSION exacta
