@@ -1,0 +1,13 @@
+Origin: Kernel-S905x-Provider
+Label: Repositorio del Kernel S905x
+Codename: stable
+Architectures: arm64
+Components: main
+Description: Servidor APT independiente para kernels modernos y drivers en cajas de TV Amlogic S905X
+
+Origin: Kernel-Fantasma-Provider
+Label: Repositorio de Pruebas del Kernel Fantasma
+Codename: beta
+Architectures: arm64
+Components: main
+Description: Canal de Pre-releases y Betas funcionales del Kernel para Amlogic S905X

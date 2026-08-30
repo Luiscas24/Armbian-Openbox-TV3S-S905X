@@ -1,0 +1,75 @@
+Package: linux-headers-6.18.48-current-meson64
+Source: linux-upstream
+Version: 6.18.48-2
+Architecture: arm64
+Maintainer: runner <runner@runnervmgx7h7.q4g2cxfkt3mutajhmiwz3bhjcd.phxx.internal.cloudapp.net>
+Installed-Size: 54717
+Homepage: https://www.kernel.org/
+Priority: optional
+Section: kernel
+Filename: pool/main/l/linux-upstream/linux-headers-6.18.48-current-meson64_6.18.48-2_arm64.deb
+Size: 9417320
+SHA256: e92bee14fdb59c1d0ad184078b60a412bb805e40176a4471e823c155f38a06df
+SHA1: c903caffd6c090577a4bdd8ab2d6abf8bc7cd504
+MD5sum: 43fea9bd0d4ee0c8ce7b2f078ca5b484
+Description: Linux kernel headers for 6.18.48-current-meson64 on arm64
+ This package provides kernel header files for 6.18.48-current-meson64 on arm64
+ .
+ This is useful for people who need to build external modules
+
+Package: linux-image-6.18.48-current-meson64
+Source: linux-upstream
+Version: 6.18.48-2
+Architecture: arm64
+Maintainer: runner <runner@runnervmgx7h7.q4g2cxfkt3mutajhmiwz3bhjcd.phxx.internal.cloudapp.net>
+Installed-Size: 198268
+Homepage: https://www.kernel.org/
+Priority: optional
+Section: kernel
+Filename: pool/main/l/linux-upstream/linux-image-6.18.48-current-meson64_6.18.48-2_arm64.deb
+Size: 34876652
+SHA256: b4c6b7d6b222cd818ae028d419895762fd5d8883288779d948238c56bfdc8d3b
+SHA1: 0d54124f1f0753f1a370433e4b913272077fb007
+MD5sum: d71aa05844291e59c1566fa115a4f830
+Description: Linux kernel, version 6.18.48-current-meson64
+ This package contains the Linux kernel, modules and corresponding other
+ files, version: 6.18.48-current-meson64.
+
+Package: linux-image-6.18.48-current-meson64-dbg
+Source: linux-upstream
+Version: 6.18.48-2
+Architecture: arm64
+Maintainer: runner <runner@runnervmgx7h7.q4g2cxfkt3mutajhmiwz3bhjcd.phxx.internal.cloudapp.net>
+Installed-Size: 458953
+Homepage: https://www.kernel.org/
+Priority: optional
+Section: debug
+Filename: pool/main/l/linux-upstream/linux-image-6.18.48-current-meson64-dbg_6.18.48-2_arm64.deb
+Size: 100321410
+SHA256: 7ed0eb28fa0ad2563bca769bdd7f4c03d8e7f533699e935b57dd0b5cdd8ed413
+SHA1: 26501b706168b27735f95f3d74cc92cb4fce25a0
+MD5sum: 8d14c5033bf337336d6db4bafed5d4e6
+Description: Linux kernel debugging symbols for 6.18.48-current-meson64
+ This package will come in handy if you need to debug the kernel. It provides
+ all the necessary debug symbols for the kernel and its modules.
+
+Package: linux-libc-dev
+Source: linux-upstream
+Version: 6.18.48-2
+Architecture: arm64
+Maintainer: runner <runner@runnervmgx7h7.q4g2cxfkt3mutajhmiwz3bhjcd.phxx.internal.cloudapp.net>
+Installed-Size: 7421
+Provides: linux-kernel-headers
+Multi-Arch: same
+Homepage: https://www.kernel.org/
+Priority: optional
+Section: devel
+Filename: pool/main/l/linux-upstream/linux-libc-dev_6.18.48-2_arm64.deb
+Size: 1485962
+SHA256: f979589f796c877b83ca3cc5daa380bec62d8ee404a3e844d5872dfdd4ccf2e3
+SHA1: 2a45724bd1ec563ddd79fbc1d79d451e0e11e47a
+MD5sum: 9ebff4533dc36df6810ea2f0512ba89a
+Description: Linux support headers for userspace development
+ This package provides userspaces headers from the Linux kernel.  These headers
+ are used by the installed headers for GNU glibc and other system libraries.
+
