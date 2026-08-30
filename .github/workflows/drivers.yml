@@ -42,30 +42,33 @@ jobs:
       run: |
         # 1. Devolvemos permisos masivos a toda la carpeta de scripts
         chmod -R +x ../linux-stable/scripts/
-        
+
         # 2. Inyectamos la configuración inalámbrica base
         echo "CONFIG_WLAN=y" >> ../linux-stable/.config
         echo "CONFIG_CFG80211=m" >> ../linux-stable/.config
-        
+
         # 3. 🔬 EXTIRPACIÓN QUIRÚRGICA DE CONTROL DE VERSIONES (Cero evasiones)
         # Forzamos el apagado completo reescribiendo todas las variantes en caliente
         sed -i 's/CONFIG_MODVERSIONS=y/# CONFIG_MODVERSIONS is not set/' ../linux-stable/.config
         sed -i 's/CONFIG_MODULE_VERSIONING=y/# CONFIG_MODULE_VERSIONING is not set/' ../linux-stable/.config
-        
+
         # Apagamos también la depuración pesada del núcleo
         sed -i 's/CONFIG_DEBUG_KERNEL=y/# CONFIG_DEBUG_KERNEL is not set/' ../linux-stable/.config
-        
+
         # 4. Forzamos la reconstrucción limpia del plano base
         make -C ../linux-stable ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- olddefconfig
-        
+
         # 5. 🖨️ INTERROGATORIO DIRECTO AL ARCHIVO FINAL (Cero conjeturas)
         echo "=== REVISIÓN DE SEGURIDAD MODULAR ==="
         grep -i "MODVERSIONS" ../linux-stable/.config || true
         grep -E "DEBUG_KERNEL|LOCKDEP|RANDSTRUCT|KASAN" ../linux-stable/.config || true
         echo "======================================="
-        
-        # 6. Lanzamos la compilación cruzada limpia con la LOCALVERSION exacta
-        make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- LOCALVERSION=-current-meson64 KBUILD_MODPOST_WARN=1 \
+
+        # 6. Lanzamos la compilación cruzada limpia con la LOCALVERSION exacta e Inyección de Entorno Directa
+        # Al meter CONFIG_MODVERSIONS= aquí, forzamos el desinflado estructural ignorando la terca caché del kernel
+        make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- LOCALVERSION=-current-meson64 \
+          CONFIG_MODVERSIONS= \
+          KBUILD_MODPOST_WARN=1 \
           -C ../linux-stable \
           M=$GITHUB_WORKSPACE/rtl8189es \
           obj-m=8189es.o \
