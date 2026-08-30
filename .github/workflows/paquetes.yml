@@ -44,8 +44,14 @@ jobs:
           sed -i 's/CONFIG_LOCALVERSION=""/CONFIG_LOCALVERSION="-current-meson64"/' .config
           make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- olddefconfig
           
-          # 2. Obligamos al kernel a verificar y re-compilar los scripts internos para ARM64
+          # 2. Obligamos al kernel a verificar y generar los scripts y cabeceras base
           make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- -j$(nproc) scripts modules_prepare
+
+          # 3. LIMPIEZA INYECTADA: Removemos binarios compilados para el host x86_64
+          # Esto garantiza que el TV Stick compile sus propias herramientas nativas
+          find scripts/ -type f -executable -exec rm -f {} +
+          rm -f scripts/basic/fixdep
+          rm -f scripts/mod/modpost
 
           echo "=== 📦 COPIADO MASIVO DE ARQUITECTURA COMPLEJA ==="
           # Copiamos absolutamente TODO lo que exige el TV stick para compilar nativo
@@ -72,7 +78,7 @@ jobs:
           Priority: optional
           Architecture: arm64
           Maintainer: Daniel <daniel@tvstick-project>
-          Description: Cabeceras completas verificadas de Daniel. Incluye scripts, fixdep, arch/arm64 e include estructural.
+          Description: Cabeceras completas verificadas de Daniel. Incluye scripts fuente, arch/arm64 e include estructural limpios de binarios x86_64.
           CONTROL_EOF
 
           mkdir -p "$DIR_DEB/linux-headers/lib/modules/$VERSION"
