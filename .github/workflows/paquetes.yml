@@ -39,32 +39,32 @@ jobs:
           echo "=== 🔬 PREPARANDO ENTORNO DE COMPILACIÓN ==="
           cd linux-stable
           
-          # 1. Regeneramos el plano base rápido e instalamos el compilador interno
+          # 1. Configuración de plano base rápido e inyección de versión
           make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- defconfig
           sed -i 's/CONFIG_LOCALVERSION=""/CONFIG_LOCALVERSION="-current-meson64"/' .config
           make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- olddefconfig
           
-          # 2. Obligamos al kernel a verificar y generar los scripts y cabeceras base
-          make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- -j$(nproc) scripts modules_prepare
+          # 2. Generación REAL de macros estructurales (Genera autoconf.h y auto.conf reales para ARM64)
+          make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- -j$(nproc) modules_prepare
 
-          # 3. LIMPIEZA INYECTADA: Removemos binarios compilados para el host x86_64
-          # Esto garantiza que el TV Stick compile sus propias herramientas nativas
+          # 3. LIMPIEZA QUIRÚRGICA: Eliminamos ejecutables y objetos de host x86_64
+          # Conservamos los archivos .h y .conf generados por el paso anterior
           find scripts/ -type f -executable -exec rm -f {} +
-          rm -f scripts/basic/fixdep
-          rm -f scripts/mod/modpost
+          find scripts/ -name "*.o" -type f -delete
+          find scripts/ -name ".*.cmd" -type f -delete
 
           echo "=== 📦 COPIADO MASIVO DE ARQUITECTURA COMPLEJA ==="
-          # Copiamos absolutamente TODO lo que exige el TV stick para compilar nativo
+          # Copiamos las carpetas estructurales con sus archivos generados reales
           cp -r include "$DESTINO/"
           cp -r scripts "$DESTINO/"
           cp -r certs "$DESTINO/" 2>/dev/null || true
           
-          # Inyectamos de forma obligatoria la estructura de arquitectura ARM64 que faltaba
+          # Copiamos la arquitectura ARM64 completa
           mkdir -p "$DESTINO/arch/arm64"
           cp -r arch/arm64/include "$DESTINO/arch/arm64/" 2>/dev/null || true
           cp arch/arm64/Makefile "$DESTINO/arch/arm64/" 2>/dev/null || true
           
-          # Archivos de control raíz
+          # Archivos de control raíz obligatorios
           cp .config "$DESTINO/.config"
           cp Module.symvers "$DESTINO/Module.symvers" 2>/dev/null || true
           cp Makefile "$DESTINO/Makefile"
@@ -78,7 +78,7 @@ jobs:
           Priority: optional
           Architecture: arm64
           Maintainer: Daniel <daniel@tvstick-project>
-          Description: Cabeceras completas verificadas de Daniel. Incluye scripts fuente, arch/arm64 e include estructural limpios de binarios x86_64.
+          Description: Cabeceras completas de Daniel con autoconf.h real y scripts limpios de objetos x86_64.
           CONTROL_EOF
 
           mkdir -p "$DIR_DEB/linux-headers/lib/modules/$VERSION"
