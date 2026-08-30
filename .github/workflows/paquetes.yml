@@ -3,18 +3,29 @@ name: "Fase 1.8: Fabricador Expreso de Paquetes .DEB"
 on:
   workflow_dispatch: # Ejecución manual en la web de GitHub
 
+# TRUCO DE SEGURIDAD NATIVO: Le damos permisos explícitos al token de la Action 
+# para leer el historial de otros flujos (Fase 1) y descargar los artefactos pesados.
+permissions:
+  actions: read
+  contents: read
+
 jobs:
   build_deb:
     runs-on: ubuntu-latest
     steps:
-      # 1. Jalamos exactamente las mismas fuentes que usan tus drivers
-      - name: 1. 🪄 Jalar fuentes del Kernel desde el historial público
-        uses: actions/download-artifact@v4
-        with:
-          name: kernel-tv3s-fuentes-y-headers
-          path: linux-stable
+      - name: 1. 📂 Clonar repositorio del Toolbox
+        uses: actions/checkout@v4
 
-      - name: 2. Construir Paquetes Estructurados .DEB
+      # 🪄 Jalar fuentes usando GitHub CLI nativo de la máquina virtual. 
+      # Es 100% inmune a los errores de bloqueo de la versión estándar de download-artifact.
+      - name: 2. 🪄 Descargar Fuentes y Headers (883 MB) desde el Historial
+        run: |
+          echo "=== Buscando último artefacto válido del Kernel ==="
+          gh run download --name "kernel-tv3s-fuentes-y-headers" --dir linux-stable
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: 3. Construir Paquetes Estructurados .DEB
         run: |
           VERSION="6.18.44-current-meson64"
           DIR_DEB="$GITHUB_WORKSPACE/deb_build"
@@ -22,7 +33,6 @@ jobs:
           mkdir -p "$DIR_DEB/linux-headers/usr/src/linux-headers-$VERSION"
 
           echo "=== 📦 ESTRUCTURANDO PAQUETE DE HEADERS ==="
-          # Metadatos oficiales para que dpkg registre las cabeceras correctamente
           cat << CONTROL_EOF > "$DIR_DEB/linux-headers/DEBIAN/control"
           Package: linux-headers-$VERSION
           Version: $VERSION-1
@@ -30,10 +40,10 @@ jobs:
           Priority: optional
           Architecture: arm64
           Maintainer: Daniel <daniel@tvstick-project>
-          Description: Cabeceras nativas y mapas de simbolos Module.symvers compilados para tu TV Stick.
+          Description: Cabeceras nativas y mapas de simbolos Module.symvers con hash c3ed70d1.
           CONTROL_EOF
 
-          # Copiamos de forma exacta la estructura ya calculada y firmada de la Fase 1
+          # Copiamos la estructura del bloque de 883 MB
           cp -r linux-stable/include "$DIR_DEB/linux-headers/usr/src/linux-headers-$VERSION/"
           cp -r linux-stable/arch/arm64/include "$DIR_DEB/linux-headers/usr/src/linux-headers-$VERSION/arch/arm64/" 2>/dev/null || true
           cp -r linux-stable/scripts "$DIR_DEB/linux-headers/usr/src/linux-headers-$VERSION/"
@@ -41,15 +51,13 @@ jobs:
           cp linux-stable/Module.symvers "$DIR_DEB/linux-headers/usr/src/linux-headers-$VERSION/Module.symvers" 2>/dev/null || true
           cp linux-stable/Makefile "$DIR_DEB/linux-headers/usr/src/linux-headers-$VERSION/Makefile"
 
-          # Enlace simbólico reglamentario de Linux para emular /lib/modules
           mkdir -p "$DIR_DEB/linux-headers/lib/modules/$VERSION"
           ln -sf /usr/src/linux-headers-$VERSION "$DIR_DEB/linux-headers/lib/modules/$VERSION/build"
 
           echo "=== 🛠️ EMPAQUETANDO CON DPKG-DEB ==="
-          # Empaquetamos la estructura usando la velocidad nativa de la máquina virtual de GitHub
           dpkg-deb --build "$DIR_DEB/linux-headers" "$GITHUB_WORKSPACE/linux-headers-${VERSION}_arm64.deb"
 
-      - name: 3. Subir Instalador .DEB como Artefacto Público
+      - name: 4. Subir Instalador .DEB como Artefacto Público
         uses: actions/upload-artifact@v4
         with:
           name: instaladores-deb-tvstick
