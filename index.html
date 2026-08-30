@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Repositorio APT Oficial - Kernel S905x</title>
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; line-height: 1.6; max-width: 800px; margin: 40px auto; padding: 0 20px; color: #333; background-color: #f9f9f9; }
+        h1 { color: #24292e; border-bottom: 2px solid #eaecef; padding-bottom: 10px; }
+        h2 { color: #0366d6; }
+        code { background-color: #eaecef; padding: 3px 6px; font-family: monospace; border-radius: 3px; font-size: 0.9em; }
+        pre { background-color: #2f363d; color: #f6f8fa; padding: 15px; border-radius: 6px; overflow-x: auto; font-family: monospace; }
+        .footer { margin-top: 50px; font-size: 0.85em; color: #586069; text-align: center; border-top: 1px solid #eaecef; padding-top: 20px; }
+        .warning-box { background-color: #fff5b6; border-left: 6px solid #ffd33d; padding: 15px; border-radius: 4px; margin: 20px 0; color: #24292e; }
+        .warning-box h3 { margin-top: 0; color: #b08000; }
+    </style>
+</head>
+<body>
+
+    <h1>👻 Repositorio APT del Kernel S905x</h1>
+    <p>Bienvenido al servidor de distribución independiente oficial. Este repositorio provee empaquetados modernos y cabeceras de kernel optimizadas para TV Sticks basados en el procesador Amlogic S905X, garantizando soporte limpio para la compilación de controladores y optimizaciones de U-Boot.</p>
+    
+    <p>Con este esfuerzo comunitario buscamos combatir la basura electrónica y llevar la computación a una era más accesible y equitativa.</p>
+
+    <h2>📡 1. Cómo agregar este repositorio en tu TV Stick</h2>
+    <p>Entra por SSH a tu dispositivo como <code>root</code> y ejecuta los siguientes comandos para registrar el canal <strong>Beta (Pre-release)</strong>:</p>
+    
+    <pre># Registrar el repositorio oficial en tu lista de fuentes
+echo "deb [trusted=yes] https://github.io beta main" | tee /etc/apt/sources.list.d/kernel-s905x.list
+
+# Actualizar el catálogo local del sistema
+apt update</pre>
+
+    <div class="warning-box">
+        <h3>⚠️ ¡ATENCIÓN! Restricción Importante en la Beta Actual (FAT32)</h3>
+        <p>Debido a políticas estrictas de <code>dpkg</code>, el instalador intentará crear enlaces duros (<em>hard links</em>) de respaldo al sobreescribir archivos viejos. Como la partición <code>/boot</code> de estas cajas de TV usa FAT32 (que no soporta enlaces duros), el comando arrojará un error de <em>Operation not permitted</em>.</p>
+        <p><strong>Para solucionar este bache, ejecuta esta limpieza manual en la consola de tu stick ANTES de instalar:</strong></p>
+        <pre style="background-color: #3f4750; margin-bottom: 0;"># Eliminar duplicados conflictivos del sector de arranque
+rm -f /boot/System.map-6.18.48-current-meson64
+rm -f /boot/config-6.18.48-current-meson64
+rm -f /boot/vmlinuz-6.18.48-current-meson64</pre>
+    </div>
+
+    <h2>📦 2. Instalación del Combo de Software</h2>
+    <p>Una vez limpia la pista en el paso anterior, ya puedes lanzar la instalación transparente del motor y las cabeceras:</p>
+    <pre>apt install linux-image-6.18.48-current-meson64 linux-headers-6.18.48-current-meson64 linux-libc-dev</pre>
+    <p>Al finalizar, el script interno automatizado reestructurará el binario <code>Image</code> para el U-Boot. Solo resta reiniciar y disfrutar.</p>
+
+    <div class="footer">
+        <p>Mantenedor Oficial: Daniel (Luiscas24) | Proyecto de Código Abierto e Infraestructura Independiente</p>
+        <p>© 2026 - Repositorio bajo la filosofía del Software Libre</p>
+    </div>
+
+</body>
+</html>
