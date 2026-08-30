@@ -19,9 +19,9 @@ jobs:
     - name: 3. Clonar exclusivamente la etiqueta v6.18.48 (Velocidad Máxima)
       run: |
         # Clonamos un solo commit apuntando directamente a la etiqueta v6.18.48 desde el Git oficial
-        git clone --depth 1 --branch v6.18.48 https://git.kernel.org/pub/scm/linux/kernel/git/stable/linux.git/ linux-stable
+        git clone --depth 1 --branch v6.18.48 https://kernel.org linux-stable
 
-    - name: 4. Generar configuración, Activar Módulos y Compilar Kernel en .DEB
+    - name: 4. Generar configuración, Activar Módulos y Compilar Kernel Completo
       working-directory: ./linux-stable
       run: |
         # 1. Generamos la configuración base arm64
@@ -39,11 +39,30 @@ jobs:
         # Sincronizamos los cambios para asegurar que el plano de configuración sea consistente
         make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- olddefconfig
         
-        # 4. COMPILACIÓN NATIVA EN .DEB 
-        # Usamos bindeb-pkg para que el kernel genere sus propios instaladores .deb oficiales
+        # 4. COMPILACIÓN ESTRUCTURADA TRADICIONAL Y GENERACIÓN DE .DEB SIMULTÁNEA
+        # Compilamos primero el árbol clásico para asegurar Image, dtbs y fuentes completas
+        make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- -j$(nproc) Image modules dtbs
+        
+        # Inmediatamente después empaquetamos en .deb oficiales para tener los instaladores listos
         make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- -j$(nproc) bindeb-pkg
 
-    - name: 5. Guardar los paquetes .DEB oficiales generados
+    - name: 5. Guardar el motor del Kernel compilado tradicional (Image y DTBs)
+      if: success()
+      uses: actions/upload-artifact@v4
+      with:
+        name: kernel-tv3s-binario-puro
+        path: |
+          linux-stable/arch/arm64/boot/Image
+          linux-stable/arch/arm64/boot/dts/amlogic/*.dtb
+
+    - name: 6. Guardar las fuentes completas con sus cabeceras para los Drivers (Acceso Total)
+      if: success()
+      uses: actions/upload-artifact@v4
+      with:
+        name: kernel-tv3s-fuentes-y-headers
+        path: linux-stable/
+
+    - name: 7. Guardar los instaladores empaquetados en paquetes .DEB oficiales
       if: success()
       uses: actions/upload-artifact@v4
       with:
