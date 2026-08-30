@@ -1,10 +1,8 @@
 name: "Fase 1.8: Fabricador Expreso de Paquetes .DEB"
 
 on:
-  workflow_dispatch: # Ejecución manual en la web de GitHub
+  workflow_dispatch:
 
-# TRUCO DE SEGURIDAD NATIVO: Le damos permisos explícitos al token de la Action 
-# para leer el historial de otros flujos (Fase 1) y descargar los artefactos pesados.
 permissions:
   actions: read
   contents: read
@@ -16,11 +14,10 @@ jobs:
       - name: 1. 📂 Clonar repositorio del Toolbox
         uses: actions/checkout@v4
 
-      # 🪄 Jalar fuentes usando GitHub CLI nativo de la máquina virtual. 
-      # Es 100% inmune a los errores de bloqueo de la versión estándar de download-artifact.
+      # Forzamos la descarga exacta dentro de la carpeta local linux-stable para imitar el entorno del driver
       - name: 2. 🪄 Descargar Fuentes y Headers (883 MB) desde el Historial
         run: |
-          echo "=== Buscando último artefacto válido del Kernel ==="
+          mkdir -p linux-stable
           gh run download --name "kernel-tv3s-fuentes-y-headers" --dir linux-stable
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -43,7 +40,7 @@ jobs:
           Description: Cabeceras nativas y mapas de simbolos Module.symvers con hash c3ed70d1.
           CONTROL_EOF
 
-          # Copiamos la estructura del bloque de 883 MB
+          # Copiamos la estructura apuntando a la ruta oficial sincronizada
           cp -r linux-stable/include "$DIR_DEB/linux-headers/usr/src/linux-headers-$VERSION/"
           cp -r linux-stable/arch/arm64/include "$DIR_DEB/linux-headers/usr/src/linux-headers-$VERSION/arch/arm64/" 2>/dev/null || true
           cp -r linux-stable/scripts "$DIR_DEB/linux-headers/usr/src/linux-headers-$VERSION/"
