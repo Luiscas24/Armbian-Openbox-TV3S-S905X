@@ -1,0 +1,56 @@
+name: "Fase 1.8: Fabricador Expreso de Paquetes .DEB"
+
+on:
+  workflow_dispatch: # Nos permite lanzarlo manualmente desde la web de GitHub
+
+jobs:
+  build_deb:
+    runs-on: ubuntu-latest
+    steps:
+      - name: 1. 🪄 Jalar fuentes del Kernel desde el historial público
+        uses: actions/download-artifact@v4
+        with:
+          name: kernel-tv3s-fuentes-y-headers
+          path: linux-stable
+
+      - name: 2. Construir Paquetes Estructurados .DEB
+        run: |
+          VERSION="6.18.44-current-meson64"
+          DIR_DEB="$GITHUB_WORKSPACE/deb_build"
+          mkdir -p "$DIR_DEB/linux-headers/DEBIAN"
+          mkdir -p "$DIR_DEB/linux-headers/usr/src/linux-headers-$VERSION"
+
+          echo "=== 📦 ESTRUCTURANDO PAQUETE DE HEADERS ==="
+          # Creamos el archivo de control obligatorio de Debian
+          cat << CONTROL_EOF > "$DIR_DEB/linux-headers/DEBIAN/control"
+          Package: linux-headers-$VERSION
+          Version: $VERSION-1
+          Section: devel
+          Priority: optional
+          Architecture: arm64
+          Maintainer: Daniel <daniel@tvstick-project>
+          Description: Cabeceras nativas y mapas de simbolos Module.symvers compilados para tu TV Stick.
+          CONTROL_EOF
+
+          # Copiamos la estructura de cabeceras de tus fuentes descargadas
+          cp -r linux-stable/include "$DIR_DEB/linux-headers/usr/src/linux-headers-$VERSION/"
+          cp -r linux-stable/arch/arm64/include "$DIR_DEB/linux-headers/usr/src/linux-headers-$VERSION/arch/arm64/" 2>/dev/null || true
+          cp -r linux-stable/scripts "$DIR_DEB/linux-headers/usr/src/linux-headers-$VERSION/"
+          cp linux-stable/.config "$DIR_DEB/linux-headers/usr/src/linux-headers-$VERSION/.config"
+          cp linux-stable/Module.symvers "$DIR_DEB/linux-headers/usr/src/linux-headers-$VERSION/Module.symvers" 2>/dev/null || true
+          cp linux-stable/Makefile "$DIR_DEB/linux-headers/usr/src/linux-headers-$VERSION/Makefile"
+
+          # Enlace simbólico reglamentario de Linux
+          mkdir -p "$DIR_DEB/linux-headers/lib/modules/$VERSION"
+          ln -sf /usr/src/linux-headers-$VERSION "$DIR_DEB/linux-headers/lib/modules/$VERSION/build"
+
+          echo "=== 🛠️ EMPAQUETANDO CON DPKG-DEB ==="
+          # Empaquetamos usando la herramienta nativa del servidor de GitHub
+          dpkg-deb --build "$DIR_DEB/linux-headers" "$GITHUB_WORKSPACE/linux-headers-${VERSION}_arm64.deb"
+
+      - name: 3. Subir Instalador .DEB como Artefacto Público
+        uses: actions/upload-artifact@v4
+        with:
+          name: instaladores-deb-tvstick
+          path: "*.deb"
+          retention-days: 5
