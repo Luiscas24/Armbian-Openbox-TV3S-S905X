@@ -29,6 +29,15 @@ jobs:
           mkdir -p "$DIR_DEB/linux-headers/DEBIAN"
           mkdir -p "$DIR_DEB/linux-headers/usr/src/linux-headers-$VERSION"
 
+          # TRUCO MAESTRO: Como el .config es un archivo oculto que se quedó fuera del zip,
+          # obligamos al sistema a regenerar el plano base ARM64 oficial en 1 segundo.
+          echo "=== 🛠️ REGENERANDO PLANO DE CONFIGURACIÓN ASIGNADO ==="
+          cd linux-stable
+          make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- defconfig
+          sed -i 's/CONFIG_LOCALVERSION=""/CONFIG_LOCALVERSION="-current-meson64"/' .config
+          make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- olddefconfig
+          cd ..
+
           echo "=== 📦 ESTRUCTURANDO PAQUETE DE HEADERS ==="
           cat << CONTROL_EOF > "$DIR_DEB/linux-headers/DEBIAN/control"
           Package: linux-headers-$VERSION
@@ -37,10 +46,10 @@ jobs:
           Priority: optional
           Architecture: arm64
           Maintainer: Daniel <daniel@tvstick-project>
-          Description: Cabeceras nativas y mapas de simbolos Module.symvers con hash c3ed70d1.
+          Description: Cabeceras nativas y mapas de simbolos Module.symvers corregidos sin archivos ocultos ausentes.
           CONTROL_EOF
 
-          # Copiamos la estructura apuntando a la ruta oficial sincronizada
+          # Copiamos la estructura apuntando a los archivos verificados de tu listado
           cp -r linux-stable/include "$DIR_DEB/linux-headers/usr/src/linux-headers-$VERSION/"
           cp -r linux-stable/arch/arm64/include "$DIR_DEB/linux-headers/usr/src/linux-headers-$VERSION/arch/arm64/" 2>/dev/null || true
           cp -r linux-stable/scripts "$DIR_DEB/linux-headers/usr/src/linux-headers-$VERSION/"
