@@ -14,7 +14,7 @@ jobs:
     - name: 2. Instalar el compilador cruzado ARM64 oficial y herramientas de empaquetado
       run: |
         sudo apt-get update
-        sudo apt-get install -y gcc-aarch64-linux-gnu build-essential bc bison flex libssl-dev libelf-dev kmod rsync dpkg-dev binfmt-support
+        sudo apt-get install -y gcc-aarch64-linux-gnu build-essential bc bison flex libssl-dev libelf-dev kmod rsync dpkg-dev binfmt-support debhelper libdw-dev
 
     - name: 3. Clonar exclusivamente la etiqueta v6.18.48 (Velocidad Máxima)
       run: |
