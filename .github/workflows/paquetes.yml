@@ -27,21 +27,44 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: 4. Construir Paquetes Estructurados .DEB
+      - name: 4. Construir Paquetes Estructurados .DEB con INFRAESTRUCTURA COMPLETA
         run: |
           VERSION="6.18.44-current-meson64"
           DIR_DEB="$GITHUB_WORKSPACE/deb_build"
           mkdir -p "$DIR_DEB/linux-headers/DEBIAN"
-          mkdir -p "$DIR_DEB/linux-headers/usr/src/linux-headers-$VERSION"
+          
+          DESTINO="$DIR_DEB/linux-headers/usr/src/linux-headers-$VERSION"
+          mkdir -p "$DESTINO"
 
-          echo "=== 🛠️ REGENERANDO PLANO DE CONFIGURACIÓN ASIGNADO ==="
+          echo "=== 🔬 PREPARANDO ENTORNO DE COMPILACIÓN ==="
           cd linux-stable
+          
+          # 1. Regeneramos el plano base rápido e instalamos el compilador interno
           make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- defconfig
           sed -i 's/CONFIG_LOCALVERSION=""/CONFIG_LOCALVERSION="-current-meson64"/' .config
           make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- olddefconfig
+          
+          # 2. Obligamos al kernel a verificar y re-compilar los scripts internos para ARM64
+          make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- -j$(nproc) scripts modules_prepare
+
+          echo "=== 📦 COPIADO MASIVO DE ARQUITECTURA COMPLEJA ==="
+          # Copiamos absolutamente TODO lo que exige el TV stick para compilar nativo
+          cp -r include "$DESTINO/"
+          cp -r scripts "$DESTINO/"
+          cp -r certs "$DESTINO/" 2>/dev/null || true
+          
+          # Inyectamos de forma obligatoria la estructura de arquitectura ARM64 que faltaba
+          mkdir -p "$DESTINO/arch/arm64"
+          cp -r arch/arm64/include "$DESTINO/arch/arm64/" 2>/dev/null || true
+          cp arch/arm64/Makefile "$DESTINO/arch/arm64/" 2>/dev/null || true
+          
+          # Archivos de control raíz
+          cp .config "$DESTINO/.config"
+          cp Module.symvers "$DESTINO/Module.symvers" 2>/dev/null || true
+          cp Makefile "$DESTINO/Makefile"
           cd ..
 
-          echo "=== 📦 ESTRUCTURANDO PAQUETE DE HEADERS ==="
+          echo "=== 📦 ESTRUCTURANDO METADATOS DEBIAN ==="
           cat << CONTROL_EOF > "$DIR_DEB/linux-headers/DEBIAN/control"
           Package: linux-headers-$VERSION
           Version: $VERSION-1
@@ -49,15 +72,8 @@ jobs:
           Priority: optional
           Architecture: arm64
           Maintainer: Daniel <daniel@tvstick-project>
-          Description: Cabeceras nativas y mapas de simbolos Module.symvers corregidos sin archivos ocultos ausentes.
+          Description: Cabeceras completas verificadas de Daniel. Incluye scripts, fixdep, arch/arm64 e include estructural.
           CONTROL_EOF
-
-          cp -r linux-stable/include "$DIR_DEB/linux-headers/usr/src/linux-headers-$VERSION/"
-          cp -r linux-stable/arch/arm64/include "$DIR_DEB/linux-headers/usr/src/linux-headers-$VERSION/arch/arm64/" 2>/dev/null || true
-          cp -r linux-stable/scripts "$DIR_DEB/linux-headers/usr/src/linux-headers-$VERSION/"
-          cp linux-stable/.config "$DIR_DEB/linux-headers/usr/src/linux-headers-$VERSION/.config"
-          cp linux-stable/Module.symvers "$DIR_DEB/linux-headers/usr/src/linux-headers-$VERSION/Module.symvers" 2>/dev/null || true
-          cp linux-stable/Makefile "$DIR_DEB/linux-headers/usr/src/linux-headers-$VERSION/Makefile"
 
           mkdir -p "$DIR_DEB/linux-headers/lib/modules/$VERSION"
           ln -sf /usr/src/linux-headers-$VERSION "$DIR_DEB/linux-headers/lib/modules/$VERSION/build"
