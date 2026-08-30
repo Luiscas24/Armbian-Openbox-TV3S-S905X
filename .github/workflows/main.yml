@@ -19,7 +19,7 @@ jobs:
     - name: 3. Clonar exclusivamente la etiqueta v6.18.48 (Velocidad Máxima)
       run: |
         # Clonamos un solo commit apuntando directamente a la etiqueta v6.18.48 desde el Git oficial
-        git clone --depth 1 --branch v6.18.48 https://kernel.org linux-stable
+        git clone --depth 1 --branch v6.18.48 https://git.kernel.org/pub/scm/linux/kernel/git/stable/linux.git/ linux-stable
 
     - name: 4. Generar configuración, Activar Módulos y Compilar Kernel en .DEB
       working-directory: ./linux-stable
