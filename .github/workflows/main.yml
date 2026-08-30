@@ -39,12 +39,38 @@ jobs:
         # Sincronizamos los cambios para asegurar que el plano de configuración sea consistente
         make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- olddefconfig
         
+        # =========================================================================
+        # AUTOMATIZACIÓN DE ARRANQUE PARA TV STICK (TRUCO DEPOSTINST)
+        # =========================================================================
+        # Creamos la carpeta de plantillas de Debian si no existe
+        mkdir -p scripts/package/debian
+        
+        # Inyectamos el comando de descompresión automática que correrá el TV Stick tras instalar el .deb
+        cat << 'EOF' > scripts/package/debian/postinst
+        #!/bin/sh
+        set -e
+        if [ "$1" = "configure" ]; then
+            echo "===================================================="
+            echo "🔧 OPTIMIZACIÓN DE BOT PARA TV STICK (S905X) 🔧"
+            echo "Extrayendo Image pura desde vmlinuz-6.18.48..."
+            echo "===================================================="
+            cd /boot
+            # Resguardamos el anterior por si acaso
+            [ -f Image ] && mv Image Image.bak || true
+            # Descomprimimos el nuevo kernel directamente al nombre que busca el U-Boot
+            tail -c +25 vmlinuz-6.18.48-current-meson64 | gunzip > Image
+            chmod +x Image
+            echo "✅ ¡Arranque actualizado con éxito para el Kernel Fantasma!"
+        fi
+        EOF
+        chmod +x scripts/package/debian/postinst
+        # =========================================================================
+
         # 4. COMPILACIÓN ESTRUCTURADA TRADICIONAL Y GENERACIÓN DE .DEB SIMULTÁNEA
         # Compilamos primero el árbol clásico para asegurar Image, dtbs y fuentes completas
         make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- -j$(nproc) Image modules dtbs
         
-        # Inmediatamente después empaquetamos en .deb oficiales para tener los instaladores listos
-        # CAMBIO AQUÍ: Se añade DPKG_FLAGS="-d" para ignorar el bloqueo de dependencias cruzadas
+        # Inmediatamente después empaquetamos en .deb oficiales
         make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- -j$(nproc) bindeb-pkg DPKG_FLAGS="-d"
 
     - name: 5. Guardar el motor del Kernel compilado tradicional (Image y DTBs)
