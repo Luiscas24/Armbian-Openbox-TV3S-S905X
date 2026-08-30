@@ -14,23 +14,26 @@ jobs:
       - name: 1. 📂 Clonar repositorio del Toolbox
         uses: actions/checkout@v4
 
-      # Forzamos la descarga exacta dentro de la carpeta local linux-stable para imitar el entorno del driver
-      - name: 2. 🪄 Descargar Fuentes y Headers (883 MB) desde el Historial
+      # 🛠️ INSTALACIÓN DE HERRAMIENTAS: Provee el compilador aarch64 que exige el Makefile
+      - name: 2. 🔌 Configurar Entorno y Compilador Cruzado AArch64
+        run: |
+          sudo apt update
+          sudo apt install -y gcc-aarch64-linux-gnu build-essential bc bison flex libssl-dev
+
+      - name: 3. 🪄 Descargar Fuentes y Headers (883 MB) desde el Historial
         run: |
           mkdir -p linux-stable
           gh run download --name "kernel-tv3s-fuentes-y-headers" --dir linux-stable
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: 3. Construir Paquetes Estructurados .DEB
+      - name: 4. Construir Paquetes Estructurados .DEB
         run: |
           VERSION="6.18.44-current-meson64"
           DIR_DEB="$GITHUB_WORKSPACE/deb_build"
           mkdir -p "$DIR_DEB/linux-headers/DEBIAN"
           mkdir -p "$DIR_DEB/linux-headers/usr/src/linux-headers-$VERSION"
 
-          # TRUCO MAESTRO: Como el .config es un archivo oculto que se quedó fuera del zip,
-          # obligamos al sistema a regenerar el plano base ARM64 oficial en 1 segundo.
           echo "=== 🛠️ REGENERANDO PLANO DE CONFIGURACIÓN ASIGNADO ==="
           cd linux-stable
           make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- defconfig
@@ -49,7 +52,6 @@ jobs:
           Description: Cabeceras nativas y mapas de simbolos Module.symvers corregidos sin archivos ocultos ausentes.
           CONTROL_EOF
 
-          # Copiamos la estructura apuntando a los archivos verificados de tu listado
           cp -r linux-stable/include "$DIR_DEB/linux-headers/usr/src/linux-headers-$VERSION/"
           cp -r linux-stable/arch/arm64/include "$DIR_DEB/linux-headers/usr/src/linux-headers-$VERSION/arch/arm64/" 2>/dev/null || true
           cp -r linux-stable/scripts "$DIR_DEB/linux-headers/usr/src/linux-headers-$VERSION/"
@@ -63,7 +65,7 @@ jobs:
           echo "=== 🛠️ EMPAQUETANDO CON DPKG-DEB ==="
           dpkg-deb --build "$DIR_DEB/linux-headers" "$GITHUB_WORKSPACE/linux-headers-${VERSION}_arm64.deb"
 
-      - name: 4. Subir Instalador .DEB como Artefacto Público
+      - name: 5. Subir Instalador .DEB como Artefacto Público
         uses: actions/upload-artifact@v4
         with:
           name: instaladores-deb-tvstick
