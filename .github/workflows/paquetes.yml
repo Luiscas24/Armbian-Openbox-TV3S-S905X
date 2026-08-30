@@ -47,9 +47,9 @@ jobs:
           # 2. Generación REAL de macros estructurales (Genera autoconf.h y auto.conf reales para ARM64)
           make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- -j$(nproc) modules_prepare
 
-          # 3. LIMPIEZA QUIRÚRGICA: Eliminamos ejecutables y objetos de host x86_64
-          # Conservamos los archivos .h y .conf generados por el paso anterior
-          find scripts/ -type f -executable -exec rm -f {} +
+          # 3. LIMPIEZA INYECTADA QUIRÚRGICA: Eliminamos SOLO binarios compilados x86_64
+          # Conservamos todos los scripts .sh, .pl y código fuente .c esenciales
+          find scripts/ -type f -exec sh -c 'file "$1" | grep -q "ELF"' _ {} \; -exec rm -f {} +
           find scripts/ -name "*.o" -type f -delete
           find scripts/ -name ".*.cmd" -type f -delete
 
