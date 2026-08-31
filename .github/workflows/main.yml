@@ -88,8 +88,9 @@ jobs:
         chmod +x scripts/package/debian/postinst
 
         # Compilación del Kernel y generación nativa del combo de paquetes .deb
+        # Neutralizamos /sbin/installkernel pasando la bandera INSTALLKERNEL=/bin/true
         make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- -j$(nproc) Image modules dtbs
-        make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- -j$(nproc) bindeb-pkg DPKG_FLAGS="-d"
+        make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- -j$(nproc) bindeb-pkg DPKG_FLAGS="-d" INSTALLKERNEL=/bin/true
 
     - name: 5. Guardar el motor del Kernel compilado tradicional (Image y DTBs)
       if: success()
