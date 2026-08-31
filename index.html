@@ -18,17 +18,27 @@
 <body>
 
     <h1>👻 Repositorio APT del Kernel S905x</h1>
+    
+    <div style="margin: 15px 0;">
+        <a href="https://github.com" target="_blank" style="background-color: #24292e; color: white; padding: 8px 16px; text-decoration: none; border-radius: 5px; font-weight: bold; font-size: 0.9em; display: inline-flex; align-items: center; gap: 8px;">
+            💻 Ver Código Fuente en GitHub
+        </a>
+    </div>
+
     <p>Bienvenido al servidor de distribución independiente oficial. Este repositorio provee empaquetados modernos y cabeceras de kernel optimizadas para TV Sticks basados en el procesador Amlogic S905X, garantizando soporte limpio para la compilación de controladores y optimizaciones de U-Boot.</p>
     
     <p>Con este esfuerzo comunitario buscamos combatir la basura electrónica y llevar la computación a una era más accesible y equitativa.</p>
 
-    <h2>📡 1. Cómo agregar este repositorio en tu TV Stick</h2>
-    <p>Entra por SSH a tu dispositivo como <code>root</code> y ejecuta los siguientes comandos para registrar el canal <strong>Beta (Pre-release)</strong>:</p>
+    <h2>📡 1. Cómo agregar este repositorio seguro en tu TV Stick</h2>
+    <p>Entra por SSH a tu dispositivo como <code>root</code> y ejecuta los siguientes comandos secuenciales para importar la llave del llavero y registrar el canal <strong>Beta (Pre-release)</strong> firmado:</p>
     
-    <pre># Registrar el repositorio oficial en tu lista de fuentes
-echo "deb [trusted=yes] https://github.io beta main" | tee /etc/apt/sources.list.d/kernel-s905x.list
+    <pre># A. Descargar e importar la llave pública de seguridad del proveedor oficial
+wget -qO - https://github.io | gpg --dearmor | tee /etc/apt/trusted.gpg.d/kernel-s905x.gpg > /dev/null
 
-# Actualizar el catálogo local del sistema
+# B. Registrar la fuente limpia y verificada (Sin trusted=yes)
+echo "deb https://github.io beta main" | tee /etc/apt/sources.list.d/kernel-s905x.list
+
+# C. Actualizar el catálogo local autenticando firmas criptográficas
 apt update</pre>
 
     <div class="warning-box">
@@ -53,3 +63,4 @@ rm -f /boot/vmlinuz-6.18.48-current-meson64</pre>
 
 </body>
 </html>
+	
