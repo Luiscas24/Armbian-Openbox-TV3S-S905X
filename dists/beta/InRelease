@@ -1,0 +1,38 @@
+-----BEGIN PGP SIGNED MESSAGE-----
+Hash: SHA512
+
+Origin: Kernel-Fantasma-Provider
+Label: Repositorio de Pruebas del Kernel Fantasma
+Codename: beta
+Date: Sun, 30 Aug 2026 23:45:51 UTC
+Architectures: arm64
+Components: main
+Description: Canal de Pre-releases y Betas funcionales del Kernel para Amlogic S905X
+MD5Sum:
+ 916d9a5d1179a1aa10cc7bb022f7f1ba 3095 main/binary-arm64/Packages
+ f03af3442a35b29710e008b13c2231ae 1096 main/binary-arm64/Packages.gz
+ 2184a7240d3254e6a293414f7e3d2d00 204 main/binary-arm64/Release
+SHA1:
+ 338254d68dd33a608e723301f755ad6b69b1306b 3095 main/binary-arm64/Packages
+ 0e49b685f3e54395d4a55736f2c03981ba8bb033 1096 main/binary-arm64/Packages.gz
+ fa572928de8605ef4979fb38d1f90e194a900325 204 main/binary-arm64/Release
+SHA256:
+ 19c88caa3c3479c7535aa1a2257ad8570689727f613b30cae378e3d915487219 3095 main/binary-arm64/Packages
+ 99428a9a8c6b6872113f030c819e4be5235856988545f61240f502321c9d2efb 1096 main/binary-arm64/Packages.gz
+ 2a6566af219bbfc99ad5268febc938012b91c53f2bc0231d7d2cda2847e0df2c 204 main/binary-arm64/Release
+-----BEGIN PGP SIGNATURE-----
+
+iQIzBAEBCgAdFiEEjH2lm9HM9DDCnuoTswIf3USOxDIFAmqUxK0ACgkQswIf3USO
+xDIMSw//S+kBzJs0WbA0h25vVwJEl75s4MboXNvnx7BweVACnUoBuk37LGOrQewy
+6r2cVE6+zLZEhdPa7T1EJ1EykGASM6AjQDfsVM3VmtuIG/aB4Ch9UXgmYIhRdQBs
+ng52wkp7CEoz1ThkwvPwUdAknFM5vpPW2wTz4qN1/P7eegsyqbM78M+IqJMj94IC
+rL7Oe+ec7Q5AQAWT6CwMMxkus4rIBKjl2bTGTwLtbbTDqXV3IGNZcgcc6uOceuUW
+DeTMKGFuuycKFOqUvEz7L1UuO+Nu7gYVdawb9oUkekcx+XC8Mf9EhGyNh8hx+1XZ
+ETeFM9gSqGSZRHmS3R2e//NpWNYTXieeEvBQid7VJmaWgXCEPV98/0GJMyqCePRv
+O4LWEZiuUONOIy6RaRDDtQI7zwE5uKNPrbSYLMi6/o3YKkSePJ7LhNo4AyPEjLRW
+Focjhkm6XuOmO06ED2Sf/8t/KU+XkiuUSjJmpcfV8m2eylpcZFdl0Mlk90S4WuIF
+sceWENO7KkY/bFcEhdfozwks252UQQGF4LBjAktNd7cK1+EGL8NKFg7Pg7EmYB2K
+0y4IcL+y9KtVySaFqZ6esxmr6tKQOmDyrx95xcJZAi+HxmI4723IzVE0oRqnnvFO
+nQmwWSDAxXHjpGchMFFOv+wRd7QuhfjDl7IrmhYrHUXHs7C1VHo=
+=1FIm
+-----END PGP SIGNATURE-----
