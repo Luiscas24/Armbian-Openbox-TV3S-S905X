@@ -37,43 +37,52 @@ jobs:
         mkdir -p scripts/package/debian
         
         # =========================================================================
-        # 🧹 JUGADA MAESTRA DE FRICCIÓN CERO: SCRIPT PRE-INSTALACIÓN (PREINST)
+        # 🛡️ LA JUGADA MAESTRA: CAMBIAR EL DESTINO DE DEBIAN A UNA CARPETA EN EXT4
         # =========================================================================
-        # Este script se ejecuta ANTES de que dpkg intente extraer los archivos.
-        # Elimina los duplicados conflictivos en /boot para evitar que dpkg intente 
-        # crear enlaces duros (hard links) imposibles en la partición FAT32.
-        cat << 'EOF' > scripts/package/debian/preinst
-        #!/bin/sh
-        set -e
-        if [ "$1" = "install" ] || [ "$1" = "upgrade" ]; then
-            echo "===================================================="
-            echo "🧹 LIMPIEZA PREVIA DE ARRANQUE EN FAT32 🧹"
-            echo "===================================================="
-            rm -f /boot/System.map-6.18.48-current-meson64
-            rm -f /boot/config-6.18.48-current-meson64
-            rm -f /boot/vmlinuz-6.18.48-current-meson64
-        fi
+        # Obligamos a Debian a instalar los binarios nativos del Makefile dentro de 
+        # /usr/share/kernel-s905x/ en lugar de /boot/ para evitar que dpkg intente 
+        # hacer hard links imposibles en la partición FAT32 durante el desempaquetado.
+        cat << 'EOF' > scripts/package/debian/rules
+        #!/usr/bin/make -f
+        %:
+        	dh $@
+
+        override_dh_install:
+        	dh_install
+        	mkdir -p debian/linux-image-6.18.48-current-meson64/usr/share/kernel-s905x
+        	mv debian/linux-image-6.18.48-current-meson64/boot/* debian/linux-image-6.18.48-current-meson64/usr/share/kernel-s905x/
         EOF
-        chmod +x scripts/package/debian/preinst
-        
+        chmod +x scripts/package/debian/rules
+
         # =========================================================================
         # 🔧 AUTOMATIZACIÓN DE ARRANQUE PARA TV STICK (POSTINST)
         # =========================================================================
-        # Este script se ejecuta DESPUÉS de que la extracción termina con éxito.
-        # Descomprime de forma transparente la nueva Image de 48 MB exigida por U-Boot.
+        # El script ahora vive en Ext4, se ejecuta al 100% y despliega los archivos
+        # hacia la partición FAT32 de forma controlada y transparente.
         cat << 'EOF' > scripts/package/debian/postinst
         #!/bin/sh
         set -e
         if [ "$1" = "configure" ]; then
             echo "===================================================="
-            echo "🔧 OPTIMIZACIÓN DE BOOT PARA TV STICK (S905X) 🔧"
-            echo "Extrayendo Image pura desde vmlinuz-6.18.48..."
+            echo "🔧 DESPLIEGUE SEGURO DEL KERNEL EN FAT32 (POSTINST) 🔧"
             echo "===================================================="
+            
+            # Limpiamos los archivos viejos en FAT32 sin restricciones de dpkg
+            rm -f /boot/System.map-6.18.48-current-meson64
+            rm -f /boot/config-6.18.48-current-meson64
+            rm -f /boot/vmlinuz-6.18.48-current-meson64
+            
+            # Movemos los binarios nuevos desde la zona segura Ext4 hacia FAT32
+            cp /usr/share/kernel-s905x/System.map-6.18.48-current-meson64 /boot/
+            cp /usr/share/kernel-s905x/config-6.18.48-current-meson64 /boot/
+            cp /usr/share/kernel-s905x/vmlinuz-6.18.48-current-meson64 /boot/
+            
+            # Ejecutamos tu extractor automático de la Image pura para el U-Boot
             cd /boot
             [ -f Image ] && mv Image Image.bak || true
             tail -c +25 vmlinuz-6.18.48-current-meson64 | gunzip > Image
             chmod +x Image
-            echo "✅ ¡Arranque actualizado con éxito para el Kernel S905x!"
+            echo "✅ ¡Ecosistema actualizado y configurado con éxito para el U-Boot!"
         fi
         EOF
         chmod +x scripts/package/debian/postinst
