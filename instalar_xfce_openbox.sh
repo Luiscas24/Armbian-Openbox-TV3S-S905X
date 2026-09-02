@@ -64,7 +64,8 @@ EOF
 
 echo "📁 4. Creando directorios base de Openbox para el entorno de usuario..."
 mkdir -p /etc/xdg/openbox
-if [ -f /etc/xdg/openbox/rc.xml ]; then
+# Blindaje Idempotente: Solo respalda el rc.xml original de fábrica la primera vez
+if [ -f /etc/xdg/openbox/rc.xml ] && [ ! -f /etc/xdg/openbox/rc.xml.bak ]; then
     cp /etc/xdg/openbox/rc.xml /etc/xdg/openbox/rc.xml.bak 2>/dev/null || true
 fi
 
@@ -74,13 +75,14 @@ chown root:root Cambiar_a_modo_consola.desktop Cambiar_a_modo_grafico.sh
 chmod 755 Cambiar_a_modo_grafico.sh
 chmod 755 Cambiar_a_modo_consola.desktop
 
-cp Cambiar_a_modo_consola.desktop /usr/share/applications/
+# Copias forzadas (-f) para permitir ejecuciones repetidas sin interrupción
+cp -f Cambiar_a_modo_consola.desktop /usr/share/applications/
 chown root:root /usr/share/applications/Cambiar_a_modo_consola.desktop
 chmod 644 /usr/share/applications/Cambiar_a_modo_consola.desktop
 
 USER_HOME=$(eval echo "~$SUDO_USER")
 
-cp Cambiar_a_modo_grafico.sh "$USER_HOME/"
+cp -f Cambiar_a_modo_grafico.sh "$USER_HOME/"
 chown root:root "$USER_HOME/Cambiar_a_modo_grafico.sh"
 chmod 755 "$USER_HOME/Cambiar_a_modo_grafico.sh"
 
@@ -92,7 +94,7 @@ else
     DESTINO_DESK="$USER_HOME"
 fi
 
-cp Cambiar_a_modo_consola.desktop "$DESTINO_DESK/"
+cp -f Cambiar_a_modo_consola.desktop "$DESTINO_DESK/"
 chown root:root "$DESTINO_DESK/Cambiar_a_modo_consola.desktop"
 chmod 755 "$DESTINO_DESK/Cambiar_a_modo_consola.desktop"
 
