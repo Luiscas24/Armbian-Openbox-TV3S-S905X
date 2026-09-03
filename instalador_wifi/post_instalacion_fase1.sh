@@ -9,7 +9,6 @@ if [ "$EUID" -ne 0 ]; then
 fi
 
 # --- AUTOCORRECCIÓN DE ENTORNO Y RUTAS (Blindada para TV Box) ---
-# Usamos BASH_SOURCE para capturar la ruta absoluta real del instalador antes de que APT se maree
 DIR_REAL_INSTALADOR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 cd "$DIR_REAL_INSTALADOR"
 
@@ -20,19 +19,9 @@ export PATH=$PATH:/sbin:/usr/sbin:/usr/local/sbin
 # 🌟 NORMALIZACIÓN DE PERMISOS EN CALIENTE (EJECUTADO EN LA TV BOX)
 # =========================================================================
 echo "[+] Normalizando la jerarquía de permisos híbridos para la TV Box..."
-# 1. Aseguramos que root del dispositivo sea dueño de todo el directorio copiado
 chown -R root:root "$DIR_REAL_INSTALADOR"
-
-# 2. El truco de la 'X' mayúscula recursiva:
-# Da acceso 755 a todas las subcarpetas (incluyendo el driver y debs) para exploración universal,
-# pero preserva los archivos planos (.c, .h) con permisos sanos sin ejecuciones falsas.
 chmod -R u=rwX,go=rX "$DIR_REAL_INSTALADOR"
-
-# 3. Forzamos permiso de lectura pura (644) exclusivamente a los paquetes .deb.
-# Esto asegura que el usuario del sistema '_apt' de Armbian los lea sin Permission Denied.
 chmod 644 "$DIR_REAL_INSTALADOR/dependencias_offline"/*.deb 2>/dev/null
-
-# 4. Aseguramos que los scripts principales retengan sus derechos de ejecución (755)
 chmod 755 "$DIR_REAL_INSTALADOR"/post_instalacion_fase*.sh
 # =========================================================================
 
@@ -40,17 +29,16 @@ echo "Ajusta los logs del kernel para que no bloqueen la interfaz de usuario"
 sysctl -w kernel.printk="3 4 1 3"
 
 echo "Mandar al driver genérico roto a la lista negra"
+# Nota de QA: Se mantiene este echo > limpio ya existente por ser estático y seguro
 echo "blacklist rtl8189es" > /etc/modprobe.d/blacklist-rtl8189es.conf
 
 echo "🧹 Asegurando la consistencia de la base de datos local (Offline)..."
-# Este comando repara cualquier paquete que haya quedado a medias en un intento previo
 sudo dpkg --configure -a
 
 # 📸 FOTOGRAFÍA PREVIA: Capturamos la versión exacta instalada del núcleo objetivo
 KERNEL_PKG_ANTES=$(dpkg-query -W -f='${Version}' linux-image-current-meson64 2>/dev/null)
 
 echo "📦 Instalamos las herramientas de forma inteligente usando APT (Offline)..."
-# 🌟 Usamos la ruta absoluta calculada para que APT encuentre la carpeta sin importar el PWD de root
 sudo apt install -y --no-install-recommends "$DIR_REAL_INSTALADOR/dependencias_offline"/*.deb
 if [ $? -ne 0 ]; then
     echo "[-] ERROR: Hubo un problema crítico al procesar los paquetes con APT."
@@ -65,8 +53,6 @@ KERNEL_PKG_DESPUES=$(dpkg-query -W -f='${Version}' linux-image-current-meson64 2
 # =========================================================================
 # 🔄 INICIO DEL BLOQUE DE ADAPTACIÓN DINÁMICA DEL ARRANQUE
 # =========================================================================
-
-# 🔍 VALIDACIÓN ATÓMICA DEFINITIVA: ¿El kernel-image sufrió cambios reales?
 if [ "$KERNEL_PKG_ANTES" == "$KERNEL_PKG_DESPUES" ] && [ -n "$KERNEL_PKG_DESPUES" ] && [ -f "/boot/Image" ]; then
     echo "[=] [INFO] El paquete 'linux-image-current-meson64' no sufrió modificaciones y /boot/Image está operativo."
     echo "[=] Omitiendo reconfiguración del cargador de arranque para preservar la estabilidad."
@@ -74,35 +60,27 @@ else
     echo "[+] Se detectó una instalación inicial o una actualización del núcleo estructural..."
     echo "[+] Sincronizando enlaces de arranque de forma dinámica y adaptable..."
     
-    # 1. Buscamos el kernel, initrd y DTB más recientes usando 'ls -t' (ordena por fecha)
     REAL_KERNEL=$(ls -t /boot/vmlinuz-* 2>/dev/null | grep -v "old" | head -n 1)
     REAL_INITRD=$(ls -t /boot/initrd.img-* 2>/dev/null | head -n 1)
     REAL_DTB=$(ls -t /boot/dtb-*/amlogic/meson-gxl-s905x-p212.dtb 2>/dev/null | head -n 1)
 
-    # Respaldos si la partición de la imagen guarda las cosas directo en la raíz de la tarjeta
     [ -z "$REAL_KERNEL" ] && REAL_KERNEL=$(ls -t /vmlinuz-* 2>/dev/null | head -n 1)
     [ -z "$REAL_INITRD" ] && REAL_INITRD=$(ls -t /initrd.img-* 2>/dev/null | head -n 1)
     [ -z "$REAL_DTB" ] && REAL_DTB=$(ls -t dtb/amlogic/meson-gxl-s905x-p212.dtb 2>/dev/null | head -n 1)
 
-    # 2. Forzamos la clonación segura sobre las rutas estáticas fijas (/Image, /uInitrd y /dtb.img)
     if [ -n "$REAL_KERNEL" ] && [ -n "$REAL_INITRD" ] && [ -n "$REAL_DTB" ]; then
         echo "[+] Mapeando kernel detectado: $(basename "$REAL_KERNEL")"
         echo "[+] Mapeando initrd detectado: $(basename "$REAL_INITRD")"
         echo "[+] Mapeando DTB detectado: $(basename "$REAL_DTB")"
         
-        # Copias de seguridad en cascada hacia las dos ubicaciones comunes
         cp -f "$REAL_KERNEL" /boot/Image 2>/dev/null || cp -f "$REAL_KERNEL" ./Image
         cp -f "$REAL_INITRD" /boot/uInitrd 2>/dev/null || cp -f "$REAL_INITRD" ./uInitrd
         cp -f "$REAL_DTB" /boot/dtb.img 2>/dev/null || cp -f "$REAL_DTB" ./dtb.img
-
-        # 💡 MITIGACIÓN CRÍTICA: Se eliminaron las líneas destructivas 'find /boot/ ... -exec rm -f {} +'
-        # Mantener las fuentes originales vmlinuz e initrd evita corromper la base de datos de APT.
     else
         echo "⚠️ [ERROR] Faltan componentes críticos del nuevo kernel instalados en el disco."
         exit 1
     fi
 
-    # 3. Localizamos el archivo extlinux.conf de forma dinámica para corregir sus líneas
     CONF_PATH=""
     [ -f "./extlinux/extlinux.conf" ] && CONF_PATH="./extlinux/extlinux.conf"
     [ -f "/boot/extlinux/extlinux.conf" ] && CONF_PATH="/boot/extlinux/extlinux.conf"
@@ -111,11 +89,9 @@ else
         echo "[+] Ajustando parámetros de arranque y herencia de UUID..."
         APPEND_LINE=$(grep -E '^[[:space:]]*append' "$CONF_PATH" | head -n 1 | sed 's/^[[:space:]]*//')
         
-        # Limpiamos la ruta eliminando prefijos de entorno para U-Boot nativo
         CLEAN_DTB=$(echo "$REAL_DTB" | sed -E 's|^\./||; s|^/||')
         NEW_FDT_LINE="fdt /$CLEAN_DTB"
 
-        # 4. Reescribimos el archivo manteniendo la compatibilidad que U-Boot clónico exige
         cat <<EOF > "$CONF_PATH"
 label Armbian_community
   kernel /Image
@@ -130,6 +106,36 @@ EOF
 fi
 # =========================================================================
 # 🔄 FIN DEL BLOQUE DE ADAPTACIÓN DINÁMICA DEL ARRANQUE
+# =========================================================================
+
+# =========================================================================
+# 🌟 CIRUGÍA PLÁSTICA DE RAÍZ EN LOS HEADERS (Inmunización de Receta)
+# =========================================================================
+# Extraemos de forma atómica el apellido exigido por el Kernel en ejecución
+KERNEL_VERSION_BASE=$(echo "$(uname -r)" | cut -d'-' -f1)
+KERNEL_LOCALVERSION=$(echo "$(uname -r)" | sed "s/^$KERNEL_VERSION_BASE//")
+
+echo "🏥 [ASEPSIA DE RAÍZ] Reparando la receta vacía de los Linux Headers..."
+echo "🏷️  Estampando sufijo permanente en las recetas: \"$KERNEL_LOCALVERSION\""
+
+# 1. Corregimos in-situ la receta de arranque del disco si existe
+if [ -f "/boot/config-$(uname -r)" ]; then
+  sudo sed -i "s/^CONFIG_LOCALVERSION=.*/CONFIG_LOCALVERSION=\"$KERNEL_LOCALVERSION\"/" /boot/config-$(uname -r)
+fi
+
+# 2. Corregimos in-situ el archivo de configuración interno de los headers instalados
+if [ -f "/usr/src/linux-headers-$(uname -r)/.config" ]; then
+  sudo sed -i "s/^CONFIG_LOCALVERSION=.*/CONFIG_LOCALVERSION=\"$KERNEL_LOCALVERSION\"/" /usr/src/linux-headers-$(uname -r)/.config
+fi
+
+# 3. Obligamos a los headers a asimilar la nueva firma y preparar los scripts nativos
+if [ -d "/usr/src/linux-headers-$(uname -r)" ]; then
+  echo "🛠️  Sincronizando estructuras nativas de los cabeceras..."
+  cd /usr/src/linux-headers-$(uname -r)
+  sudo make modules_prepare >/dev/null 2>&1
+  sudo make scripts >/dev/null 2>&1
+  cd "$DIR_REAL_INSTALADOR"
+fi
 # =========================================================================
 
 echo "🔄 [AVISO] Ecosistema procesado con éxito."

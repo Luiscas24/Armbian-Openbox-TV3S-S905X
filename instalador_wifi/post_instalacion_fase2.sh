@@ -1,5 +1,5 @@
 #!/bin/bash
-# 🛠️ FASE 2: Compilación nativa del controlador Wi-Fi RTL8189ES (Versión Final Blindada)
+# 🧪 SCRIPT EN MODO PRUEBA DE QA: Triple Candado Forense Completo y Control Atómico
 
 # --- AUTO-SOLICITUD DE PERMISOS ROOT ---
 if [ "$EUID" -ne 0 ]; then
@@ -35,20 +35,12 @@ if [ -f "Makefile" ]; then
   make clean >/dev/null 2>&1
 fi
 
-# 🧬 LA CURA: Extraemos el "apellido" y hashes exactos de tu imagen Trunk de Armbian
-KERNEL_VERSION_BASE=$(echo "$(uname -r)" | cut -d'-' -f1)
-KERNEL_LOCALVERSION=$(echo "$(uname -r)" | sed "s/^$KERNEL_VERSION_BASE//")
+# =========================================================================
+# ⚠️ TU LÍNEA DE COMPILACIÓN ORIGINAL (Mantiene el fallo real del Vermagic)
+# =========================================================================
+make -j$(nproc) KSRC=/usr/src/linux-headers-$(uname -r) ARCH=arm64 modules
 
-echo "🏷️ Inyectando firma de versión al módulo: LOCALVERSION=\"$KERNEL_LOCALVERSION\""
-
-# Compilación blindada heredando la firma exacta que exige tu Kernel en ejecución
-make -j$(nproc) \
-  KSRC=/usr/src/linux-headers-$(uname -r) \
-  ARCH=arm64 \
-  LOCALVERSION="$KERNEL_LOCALVERSION" \
-  modules
-
-# Validación inmediata del proceso de compilación
+# 1. VALIDACIÓN INMEDIATA DE LA COMPILACIÓN
 if [ $? -ne 0 ]; then
   echo "❌ [ERROR] La compilación falló. Revisa si faltan dependencias o herramientas de build."
   exit 1
@@ -57,7 +49,7 @@ fi
 echo "📦 Moviendo el archivo .ko a la carpeta de módulos del sistema..."
 mkdir -p /lib/modules/$(uname -r)/kernel/drivers/net/wireless/
 
-# Copia forzada para cumplir con el estándar de idempotencia estricta
+# 2. VALIDACIÓN INMEDIATA DE LA COPIA FÍSICA
 cp -f 8189es.ko /lib/modules/$(uname -r)/kernel/drivers/net/wireless/
 if [ $? -ne 0 ]; then
   echo "❌ [ERROR] No se pudo copiar el archivo .ko al sistema."
@@ -68,40 +60,62 @@ echo "🔄 Registrando el módulo de forma permanente en el sistema..."
 depmod -a
 
 # =========================================================================
-# 🛡️ CANDADO 1: AUDITORÍA DE VERMAGIC FÍSICO (En el disco)
+# 🛡️ CANDADO 1: AUDITORÍA DE VERMAGIC AVANZADA (Fidelidad en Disco)
 # =========================================================================
-VERMAGIC_REAL=$(modinfo -F vermagic /lib/modules/$(uname -r)/kernel/drivers/net/wireless/8189es.ko | awk '{print $1}')
+# Capturamos la cadena completa, limpiando espacios invisibles redundantes
+VERMAGIC_REAL=$(modinfo -F vermagic /lib/modules/$(uname -r)/kernel/drivers/net/wireless/8189es.ko | awk '{$1=$1; print}')
 KERNEL_ACTIVO=$(uname -r)
 
-echo "🔬 Auditando consistencia: Módulo ($VERMAGIC_REAL) vs Kernel ($KERNEL_ACTIVO)"
+echo "🔬 [AUDITORÍA DE TEXTO] Inspeccionando consistencia cruda:"
+echo "   ➔ String en Disco:  '$VERMAGIC_REAL'"
+echo "   ➔ Exigencia Kernel: '$KERNEL_ACTIVO'"
 
-if [ "$VERMAGIC_REAL" != "$KERNEL_ACTIVO" ]; then
+# Doble corchete para manejo atómico de espacios. El patrón == * * valida match parcial exacto.
+if [[ "$VERMAGIC_REAL" != *"$KERNEL_ACTIVO"* ]]; then
   echo "-------------------------------------------------------------------------"
-  echo "❌ [CANDADO 1: BLOQUEADO] ¡Falso Positivo detectado en el archivo físico!"
-  echo "⚠️ El archivo se compiló con firma: '$VERMAGIC_REAL'"
-  echo "⚠️ El sistema exige:                 '$KERNEL_ACTIVO'"
-  echo "🛡️  Preservación Forense: El flujo se detiene aquí."
+  echo "❌ [CANDADO 1: DETENIDO EN SECO] ¡Falso Positivo detectado en disco!"
+  echo "⚠️ La firma grabada en el binario y la del Kernel vivo no hacen match."
+  echo "🛡️  Preservación Forense del Estado: El flujo se frena antes de la RAM."
   echo "-------------------------------------------------------------------------"
   exit 1
 fi
+# =========================================================================
 
-# Intentamos la carga del módulo con la firma ya corregida
+# =========================================================================
+# ⚡ EJECUCIÓN DEL COMANDO CRÍTICO Y CAPTURA INMEDIATA DE ESTADO
+# =========================================================================
+echo "⚡ Intentando la carga del módulo con modprobe..."
 modprobe 8189es
+CODIGO_SALIDA_REAL=$? # 🛡️ Captura atómica instantánea.
 
 # =========================================================================
-# 🔍 CANDADO 2 y 3: AUDITORÍA DE MEMORIA VIVA (En la RAM)
+# 🛡️ CANDADO 2: EL SEMÁFORO DE INYECCIÓN CLI
 # =========================================================================
-# Buscamos en /sys/module/ si el módulo logró inicializarse y está en estado 'live'
-if [ ! -d "/sys/module/8189es" ] || [ "$(cat /sys/module/8189es/initstate 2>/dev/null)" != "live" ]; then
+if [ $CODIGO_SALIDA_REAL -ne 0 ]; then
   echo "-------------------------------------------------------------------------"
-  echo "❌ [CANDADO 2/3: BLOQUEADO] El Kernel bloqueó el módulo en la RAM."
-  echo "⚠️  Estado del módulo en el sistema: '$(cat /sys/module/8189es/initstate 2>/dev/null || echo "No cargado")'"
-  echo "🛡️  Asepsia en la detección: Falso positivo destruido con éxito."
+  echo "❌ [CANDADO 2: DETENIDO] modprobe devolvió un código de error real ($CODIGO_SALIDA_REAL)."
+  echo "⚠️ El Kernel rechazó físicamente el binario en la terminal."
+  echo "🛡️  Asepsia en la detección: Se detiene el flujo."
   echo "-------------------------------------------------------------------------"
   exit 1
 fi
 # =========================================================================
 
-# SÓLO SI PASA EL DISCO Y LA MEMORIA VIVA OPERATIVA, LLEGAMOS AQUÍ CON UN ÉXITO REAL PERSISTENTE:
-echo "✅ [ÉXITO COMPLETO] ¡Controlador RTL8189ES inyectado, activo y en estado LIVE!"
+# =========================================================================
+# 🔍 CANDADO 3: AUDITORÍA DE MEMORIA VIVA OPERATIVA (En la RAM)
+# =========================================================================
+INIT_STATE=$(cat /sys/module/8189es/initstate 2>/dev/null || echo "inexistente")
+echo "🔬 Estado de inicialización en RAM: '$INIT_STATE'"
+
+if [ "$INIT_STATE" != "live" ]; then
+  echo "-------------------------------------------------------------------------"
+  echo "❌ [CANDADO 3: DETENIDO] Módulo en estado inválido o inexistente en RAM."
+  echo "🛡️  Aislamiento de la Escena del Fallo: Abortando despliegue."
+  echo "-------------------------------------------------------------------------"
+  exit 1
+fi
+# =========================================================================
+
+# SÓLO SI LOS TRES CANDADOS PASAN EN ESTRICTO ORDEN SECUENCIAL, LLEGAMOS AL ÉXITO REAL:
+echo "✅ [ÉXITO COMPLETO] ¡Controlador RTL8189ES levantado con firma persistente y permanente!"
 echo "📶 Comprueba tus redes inalámbricas disponibles."
