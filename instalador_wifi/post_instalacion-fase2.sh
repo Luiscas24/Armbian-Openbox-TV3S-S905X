@@ -1,5 +1,5 @@
 #!/bin/bash
-# 🛠️ FASE 2: Compilación nativa del controlador Wi-Fi RTL8189ES
+# 🛠️ FASE 2: Compilación nativa del controlador Wi-Fi RTL8189ES (Firma Persistente)
 
 # --- AUTO-SOLICITUD DE PERMISOS ROOT ---
 if [ "$EUID" -ne 0 ]; then
@@ -9,7 +9,6 @@ if [ "$EUID" -ne 0 ]; then
 fi
 
 # --- AUTOCORRECCIÓN DE ENTORNO Y RUTAS ---
-# Guardamos la ruta absoluta del directorio base para movernos de forma segura
 DIR_BASE="$(cd "$(dirname "$(readlink -f "$0")")" && pwd)"
 cd "$DIR_BASE"
 
@@ -20,38 +19,46 @@ export PATH=$PATH:/sbin:/usr/sbin:/usr/local/sbin
 # 🌟 INICIALIZACIÓN DE HEADERS NATIVOS (SOLUCIÓN AL ERROR DE MODULES)
 # =========================================================================
 echo "🛠️ Despertando y preparando los scripts de arquitectura para el nuevo kernel ($(uname -r))..."
-# Nos movemos a la carpeta de los headers recién instalados bajo el nuevo kernel
 cd /usr/src/linux-headers-$(uname -r)
 
-# Preparamos el entorno interno y compilamos las herramientas nativas (como fixdep)
 make modules_prepare >/dev/null 2>&1
 make scripts >/dev/null 2>&1
 
-# Regresamos de forma segura a la carpeta raíz de nuestro instalador
 cd "$DIR_BASE"
 # =========================================================================
 
 echo "🛠️ Compilando el controlador Realtek de forma nativa sobre el kernel actual ($(uname -r))..."
 cd ./rtl8189ES_linux
 
-# 💡 MITIGACIÓN EXTRA: Limpieza preventiva para que segundas pasadas no arrastren binarios corruptos
 if [ -f "Makefile" ]; then
   echo "🧹 Limpiando residuos de compilaciones anteriores..."
   make clean >/dev/null 2>&1
 fi
 
-# Compilación optimizada usando todos los núcleos del S905X
-make -j$(nproc) KSRC=/usr/src/linux-headers-$(uname -r) ARCH=arm64 modules
+# 💡 CORRECCIÓN CRUCIAL: Extraemos el "apellido" del kernel (ej: -current-meson64) 
+# Restamos la versión base (6.18.48) del 'uname -r' completo para obtener la etiqueta exacta.
+KERNEL_VERSION_BASE=$(echo "$(uname -r)" | cut -d'-' -f1)
+KERNEL_LOCALVERSION=$(echo "$(uname -r)" | sed "s/^$KERNEL_VERSION_BASE//")
 
-# El 'cp' crucial para inyectar el módulo en caliente
+echo "🏷️ Inyectando firma de versión al módulo: LOCALVERSION=\"$KERNEL_LOCALVERSION\""
+
+# Compilación blindada heredando la firma exacta que exige el Kernel en ejecución
+make -j$(nproc) \
+  KSRC=/usr/src/linux-headers-$(uname -r) \
+  ARCH=arm64 \
+  LOCALVERSION="$KERNEL_LOCALVERSION" \
+  modules
+
 echo "📦 Moviendo el archivo .ko a la carpeta de módulos del sistema..."
-# 💡 MITIGACIÓN EXTRA: Aseguramos que la carpeta exista por si el nuevo kernel vino vacío
 mkdir -p /lib/modules/$(uname -r)/kernel/drivers/net/wireless/
-cp 8189es.ko /lib/modules/$(uname -r)/kernel/drivers/net/wireless/
 
-# Actualizar el mapa de dependencias y activar el módulo
+# Usamos cp -f para cumplir con tu estándar de máxima repetibilidad (idempotencia)
+cp -f 8189es.ko /lib/modules/$(uname -r)/kernel/drivers/net/wireless/
+
+# Forzamos la regeneración del mapa de dependencias del sistema y cargamos de forma permanente
+echo "🔄 Registrando el módulo de forma permanente en el sistema..."
 depmod -a
 modprobe 8189es
 
-echo "✅ [ÉXITO] ¡Controlador RTL8189ES levantado de forma nativa y en caliente!"
+echo "✅ [ÉXITO] ¡Controlador RTL8189ES levantado con firma persistente y permanente!"
 echo "📶 Comprueba tus redes inalámbricas disponibles."
