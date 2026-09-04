@@ -3,15 +3,14 @@
 # 🖥️ PROVISIONADOR: Openbox Estable + Tint2 + PCManFM (Ecosistema Modular S905X)
 # 👤 Autor:        Luis Danie Castellanos Remolina <luisda1583@gmail.com>
 # 🤖 Coautor:      Asistente de IA - Gemini - (Bajo estricta dirección arquitectónica)
-# 🌐 Repo git:     https://github.com
+# 🌐 Repo git:     https://github.com/Luiscas24/armbian-tv3s-toolbox
 # 📜 Licencia:     GPL-3.0
-# 🛠️ Versión:      2.0.7
+# 🛠️ Versión:      2.0.9
 # =========================================================================
-# Descripción: Automatiza la transición desatendida hacia un entorno modular
-#              ultraligero basado en Openbox Puro. Elimina las dependencias
-#              rígidas de XFCE, delega el escritorio a PCManFM para garantizar
-#              el menú contextual tradicional, fuerza a LightDM a usar Openbox,
-#              e inyecta de forma atómica el activador Cambiar_a_modo_grafico.
+# Descripción: Automatiza la instalación desatendida de un entorno modular
+#              ultraligero basado en Openbox Puro. Delega el escritorio a
+#              PCManFM para garantizar el menú contextual tradicional, fuerza
+#              a LightDM a usar Openbox e inyecta el activador gráfico.
 # =========================================================================
 
 # --- AUTO-SOLICITUD DE PERMISOS ROOT SILENCIOSA (Autogestionada) ---
@@ -28,33 +27,16 @@ export PATH=$PATH:/sbin:/usr/sbin:/usr/local/sbin
 export DEBIAN_FRONTEND=noninteractive
 export DEBIAN_PRIORITY=critical
 
-echo "🧼 1. Purgando componentes conflictivos de XFCE y restaurando el sistema..."
-systemctl stop lightdm 2>/dev/null || true
-
-# Eliminar sockets huerfanos y configuraciones hibridas previas
-rm -rf /tmp/dbus-* /tmp/.X11-unix /tmp/.X*-lock
-rm -f /usr/local/bin/xfwm4
-
-# Desinstalar el motor de XFCE que generaba el recuadro amarillo
-apt-get purge -y xfce4-session xfce4-settings xfconf xfce4-panel xfdesktop4 2>/dev/null || true
-apt-get autoremove -y
-
 # --- DETECCIÓN DETERMINISTA DEL USUARIO REAL ---
 REAL_USER="$SUDO_USER"
 [ -z "$REAL_USER" ] && REAL_USER=$(logname 2>/dev/null)
 [ -z "$REAL_USER" ] && REAL_USER=$USER
 USER_HOME=$(eval echo "~$REAL_USER")
 
-if [ "$REAL_USER" != "root" ] && [ -d "$USER_HOME" ]; then
-    rm -rf "$USER_HOME/.cache/xfce4" "$USER_HOME/.config/xfce4"
-fi
-rm -rf /root/.cache/xfce4 /root/.config/xfce4
-rm -rf /etc/systemd/user/xfconfd.service.d
-
-echo "🔄 2. Actualizando indices de paquetes..."
+echo "🔄 1. Actualizando índices de paquetes..."
 apt-get update
 
-echo "📦 3. Instalando Openbox, Tint2, gestor de escritorio tradicional y servidor grafico..."
+echo "📦 2. Instalando Openbox, Tint2, gestor de escritorio tradicional y servidor gráfico..."
 apt-get install -y --no-install-recommends \
     -o Dpkg::Options::="--force-confdef" \
     -o Dpkg::Options::="--force-confold" \
@@ -70,27 +52,26 @@ apt-get install -y --no-install-recommends \
     lxterminal \
     lightdm
 
-echo "🏥 4. Inmunizando variables globales de entorno y D-Bus..."
+echo "🏥 3. Inmunizando variables globales de entorno y D-Bus..."
 for var in 'XDG_CONFIG_DIRS="/etc/xdg:/etc"' 'XDG_DATA_DIRS="/usr/share:/usr/local/share"'; do
     grep -q "${var%%=*}" /etc/environment || echo "$var" >> /etc/environment
 done
 
 rm -f /etc/machine-id /var/lib/dbus/machine-id
 dbus-uuidgen --ensure=/etc/machine-id
-dbus-uuidgen --ensure=/var/lib/dbus/machine-id
+dbus-uuidgen --ensure 2>/dev/null || true
 
 # =========================================================================
 # 🎨 INTEGRACIÓN FÍSICA DEL WALLPAPER LOCAL NATIVO
 # =========================================================================
-echo "🎨 4.5 Desplegando fondo de pantalla oficial integrado en la suite..."
+echo "🎨 3.5 Desplegando fondo de pantalla oficial integrado en la suite..."
 mkdir -p /usr/share/backgrounds
 
-# Si el archivo del fondo existe al lado del script, lo copia de forma local
 if [ -f armbian-tv3s-wallpaper.jpg ]; then
-    cp armbian-tv3s-wallpaper.jpg /usr/share/backgrounds/armbian-tv3s-wallpaper.jpg
-    chmod 644 /usr/share/backgrounds/armbian-tv3s-wallpaper.jpg
+    cp armbian-tv3s-wallpaper.jpg /usr/share/backgrounds/Armbian_trianglify_random_blue.jpg
+    chmod 644 /usr/share/backgrounds/Armbian_trianglify_random_blue.jpg
 else
-    echo "⚠️ [INFO] Archivo 'armbian-tv3s-wallpaper.jpg' no encontrado en el origen. Saltando integracion visual."
+    echo "⚠️ [INFO] Archivo 'armbian-tv3s-wallpaper.jpg' no encontrado en el origen. Saltando integración visual."
 fi
 
 # =========================================================================
@@ -107,20 +88,18 @@ rm -f /var/lib/lightdm/.cache/lightdm-gtk-greeter/state 2>/dev/null || true
 # =========================================================================
 # ⚙️ CONFIGURACIÓN DEL ARRANQUE EN VIVO SECUENCIAL
 # =========================================================================
-echo "⚙️ 5. Programando inicio de componentes con retardo secuencial..."
+echo "⚙️ 4. Programando inicio de componentes con retardo secuencial..."
 
 mkdir -p "$USER_HOME/.config/openbox"
 cat << 'EOF' > "$USER_HOME/.config/openbox/autostart"
 if [ -z "$DBUS_SESSION_BUS_ADDRESS" ] && [ -x /usr/bin/dbus-launch ]; then
     eval $(dbus-launch --sh-syntax --exit-with-session)
 fi
-
 sleep 1
 tint2 &
 pcmanfm --desktop &
 EOF
 
-# Forzar la inyección de la plantilla de visualización para PCManFM
 mkdir -p "$USER_HOME/.config/pcmanfm/default"
 cat << 'EOF' > "$USER_HOME/.config/pcmanfm/default/desktop-items-0.conf"
 [*]
@@ -133,7 +112,6 @@ show_trash=0
 show_mounts=0
 EOF
 
-# Clonar configuraciones de arranque y estetica para el usuario Root
 mkdir -p /root/.config/openbox
 cp "$USER_HOME/.config/openbox/autostart" /root/.config/openbox/autostart
 
@@ -194,9 +172,9 @@ chown root:root /usr/local/bin/Cambiar_a_modo_grafico
 chmod 755 /usr/local/bin/Cambiar_a_modo_grafico
 
 # =========================================================================
-# 📁 6. GESTIÓN DE LANZADORES INVERSOS Y EXCEPCIONES DE PRIVILEGIOS
+# 📁 5. GESTIÓN DE LANZADORES INVERSOS Y EXCEPCIONES DE PRIVILEGIOS
 # =========================================================================
-echo "📁 6. Creando directorios base de Openbox para el entorno de usuario..."
+echo "📁 5. Creando directorios base de Openbox para el entorno de usuario..."
 mkdir -p /etc/xdg/openbox
 if [ -f /etc/xdg/openbox/rc.xml ]; then
     cp /etc/xdg/openbox/rc.xml /etc/xdg/openbox/rc.xml.bak 2>/dev/null || true
@@ -205,7 +183,6 @@ fi
 echo "🔐 [Seguridad] Configurando excepciones de sudoers para cambios de entorno..."
 mkdir -p /etc/sudoers.d
 cat << 'EOF' > /etc/sudoers.d/armbian-tv3s-toggle-rules
-# Reglas de automatización para armbian-tv3s-toolbox
 ALL ALL=(ALL) NOPASSWD: /usr/local/bin/Cambiar_a_modo_grafico
 EOF
 chmod 0440 /etc/sudoers.d/armbian-tv3s-toggle-rules
@@ -247,3 +224,4 @@ echo " O simplemente reiniciando la TV Box con el comando: sudo reboot"
 echo ""
 echo " Si necesita volver al modo de solo consola, haga doble clic en el icono"
 echo " 'Pasar a Consola Pura' desde su escritorio o menú de aplicaciones."
+echo "-------------------------------------------------------------------------"
