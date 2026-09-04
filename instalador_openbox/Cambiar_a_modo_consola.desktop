@@ -1,9 +1,18 @@
+# =========================================================================
+# 🖥️ LANZADOR: Pasar del Entorno Gráfico a Consola Pura (Cierre Seguro X11)
+# 👤 Autor:        Luis Daniel Castellanos Remolina <luisda1583@gmail.com>
+# 🤖 Coautor:      Asistente de IA - Gemini - (Bajo estricta dirección de QA humana)
+# 🌐 Repo git:     https://github.com/Luiscas24/Armbian-Openbox-TV3S-S905X
+# 📜 Licencia:     GPL-3.0
+# 🛠️ Versión:      1.0.0
+# =========================================================================
+
 [Desktop Entry]
 Version=1.0
 Type=Application
 Name=Pasar a Consola Pura
-Comment=Apaga el entorno gráfico para liberar RAM y trabajar en la terminal
-Exec=xfce4-terminal -e "bash -c 'DISPLAY=:0 notify-send \"Armbian TV3S\" \"🛑 Apagando interfaz gráfica... Liberando memoria RAM.\"; sleep 2; sudo systemctl isolate multi-user.target'"
+Comment=Apaga el entorno grafico para liberar RAM y trabajar en la terminal
+Exec=bash -c 'DISPLAY=:0 notify-send "Armbian TV3S" "🛑 Apagando interfaz grafica... Liberando memoria RAM."; sleep 2; sudo systemctl isolate multi-user.target'
 Icon=utilities-terminal
 Terminal=false
 Categories=System;Settings;

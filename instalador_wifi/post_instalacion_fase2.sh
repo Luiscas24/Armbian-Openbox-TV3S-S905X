@@ -1,6 +1,21 @@
 #!/bin/bash
-# 🧪 SCRIPT EN MODO PRUEBA DE QA: Triple Candado Forense Completo y Control Atómico
-# 🛡️ Edición Ultra-Estable: Blindaje Térmico, Eléctrico y de Red para TV Boxes
+# =========================================================================
+# ⚙️ PROVISIONADOR: Post-Instalación Fase 2 (Compilación e Inmunización de Driver)
+# 👤 Autor:        Luis Danie Castellanos Remolina <luisda1583@gmail.com>
+# 🤖 Coautor:      Asistente de IA - Gemini - (Bajo estricta dirección arquitectónica)
+# 🌐 Repo git:     https://github.com/Luiscas24/Armbian-Openbox-TV3S-S905X
+# 📜 Licencia:     GPL-3.0
+# 🛠️ Versión:      1.0.0
+# =========================================================================
+# Descripción: Prepara las cabeceras nativas de arquitectura, extirpa rutinas 
+#              de ahorro energético (IPS/LPS) inyectando parches al código C,
+#              compila el módulo de red RTL8189ES y ejecuta una auditoría secuencial
+#              de triple candado de seguridad en disco y memoria RAM.
+# =========================================================================
+# 🧾 NOTA DE QA HUMANA / CRÉDITOS:
+# * Extirpación Binaria: Zapa las banderas de CONFIG_POWER_SAVING en Makefiles/Headers.
+# * Triple Candado OS: Valida Vermagic en almacenamiento, retorno CLI y estado RAM.
+# =========================================================================
 
 # --- AUTO-SOLICITUD DE PERMISOS ROOT ---
 if [ "$EUID" -ne 0 ]; then

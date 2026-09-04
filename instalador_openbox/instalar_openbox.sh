@@ -1,11 +1,11 @@
 #!/bin/bash
 # =========================================================================
 # 🖥️ PROVISIONADOR: Openbox Estable + Tint2 + PCManFM (Ecosistema Modular S905X)
-# 👤 Autor:        Luis Danie Castellanos Remolina <luisda1583@gmail.com>
+# 👤 Autor:        Luis Daniel Castellanos Remolina <luisda1583@gmail.com>
 # 🤖 Coautor:      Asistente de IA - Gemini - (Bajo estricta dirección arquitectónica)
 # 🌐 Repo git:     https://github.com/Luiscas24/armbian-tv3s-toolbox
 # 📜 Licencia:     GPL-3.0
-# 🛠️ Versión:      2.0.9
+# 🛠️ Versión:      1.0.0
 # =========================================================================
 # Descripción: Automatiza la instalación desatendida de un entorno modular
 #              ultraligero basado en Openbox Puro. Delega el escritorio a

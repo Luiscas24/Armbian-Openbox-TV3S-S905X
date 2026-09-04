@@ -1,5 +1,22 @@
 #!/bin/bash
-#Script que prepara las condiciones para que la imagen sea plenamente utilizable en el dispositivo.
+# =========================================================================
+# 📦 PROVISIONADOR: Pre-instalación Offline y Árbol de Dependencias Wi-Fi
+# 👤 Autor:        Luis Danie Castellanos Remolina <luisda1583@gmail.com>
+# 🤖 Coautor:      Asistente de IA - Gemini - (Bajo estricta dirección arquitectónica)
+# 🌐 Repo git:     https://github.com
+# 📜 Licencia:     GPL-3.0
+# 🛠️ Versión:      1.0.0
+# =========================================================================
+# Descripción: Prepara las condiciones offline y calcula el árbol de 
+#              dependencias binarias de forma quirúrgica para que la imagen 
+#              de Armbian sea plenamente utilizable en el dispositivo.
+# =========================================================================
+# 🧾 CRÉDITOS Y ATRIBUCIONES DE TERCEROS:
+# * Drivers Realtek RTL8189ES: Desarrollados y mantenidos originalmente por 
+#   Hans de Goede (jwrdegoede) en GitHub.
+# * Ecosistema de Red y Espejos: Soportado de forma comunitaria por los 
+#   repositorios beta de Armbian y los índices binarios oficiales de Debian.
+# =========================================================================
 
 # --- AUTO-SOLICITUD DE PERMISOS ROOT ---
 if [ "$EUID" -ne 0 ]; then

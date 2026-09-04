@@ -1,5 +1,20 @@
 #!/bin/bash
-# 🛠️ FASE 1: Instalación del ecosistema del kernel y herramientas offline
+# =========================================================================
+# ⚙️ PROVISIONADOR: Post-Instalación Fase 1 (Kernel & Inmunización de Headers)
+# 👤 Autor:        Luis Danie Castellanos Remolina <luisda1583@gmail.com>
+# 🤖 Coautor:      Asistente de IA - Gemini - (Bajo estricta dirección arquitectónica)
+# 🌐 Repo git:     https://github.com/Luiscas24/Armbian-Openbox-TV3S-S905X
+# 📜 Licencia:     GPL-3.0
+# 🛠️ Versión:      1.0.0
+# =========================================================================
+# Descripción: Instala de forma desatendida el ecosistema del kernel y las 
+#              herramientas offline. Sincroniza dinámicamente los enlaces de 
+#              arranque del chip S905X y repara la receta de los Linux Headers.
+# =========================================================================
+# 🧾 NOTA DE QA HUMANA / CRÉDITOS:
+# * Silenciador Verbose: Ajusta sysctl para mitigar ruido del driver Realtek.
+# * Asepsia de Recetas: Sincroniza estructuras nativas previas a compilación.
+# =========================================================================
 
 # --- AUTO-SOLICITUD DE PERMISOS ROOT ---
 if [ "$EUID" -ne 0 ]; then
