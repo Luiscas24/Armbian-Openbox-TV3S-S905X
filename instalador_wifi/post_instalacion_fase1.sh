@@ -25,8 +25,19 @@ chmod 644 "$DIR_REAL_INSTALADOR/dependencias_offline"/*.deb 2>/dev/null
 chmod 755 "$DIR_REAL_INSTALADOR"/post_instalacion_fase*.sh
 # =========================================================================
 
-echo "Ajusta los logs del kernel para que no bloqueen la interfaz de usuario"
+# =========================================================================
+# ⚙️ AJUSTE PERSISTENTE DE LOGS DEL KERNEL (SILENCIA VERBOSE DE REALTEK)
+# =========================================================================
+echo "⚙️ Ajustando logs del kernel persistentes para no bloquear la interfaz de usuario..."
+mkdir -p /etc/sysctl.d
+cat << 'EOF' > /etc/sysctl.d/20-silence-realtek.conf
+# Bloquea los mensajes ruidosos de depuración del driver en pantalla tras los reinicios
+kernel.printk = 3 4 1 3
+EOF
+
+# Aplicación inmediata en la RAM actual para la sesión viva
 sysctl -w kernel.printk="3 4 1 3"
+# =========================================================================
 
 echo "Mandar al driver genérico roto a la lista negra"
 # Nota de QA: Se mantiene este echo > limpio ya existente por ser estático y seguro
@@ -54,7 +65,7 @@ KERNEL_PKG_DESPUES=$(dpkg-query -W -f='${Version}' linux-image-current-meson64 2
 # 🔄 INICIO DEL BLOQUE DE ADAPTACIÓN DINÁMICA DEL ARRANQUE
 # =========================================================================
 if [ "$KERNEL_PKG_ANTES" == "$KERNEL_PKG_DESPUES" ] && [ -n "$KERNEL_PKG_DESPUES" ] && [ -f "/boot/Image" ]; then
-    echo "[=] [INFO] El paquete 'linux-image-current-meson64' no sufrió modificaciones y /boot/Image está operativo."
+    echo "[=] [INFO] El paquete 'linux-image-current-meson64' no sufrió modificaciones and /boot/Image está operativo."
     echo "[=] Omitiendo reconfiguración del cargador de arranque para preservar la estabilidad."
 else
     echo "[+] Se detectó una instalación inicial o una actualización del núcleo estructural..."
@@ -89,6 +100,11 @@ else
         echo "[+] Ajustando parámetros de arranque y herencia de UUID..."
         APPEND_LINE=$(grep -E '^[[:space:]]*append' "$CONF_PATH" | head -n 1 | sed 's/^[[:space:]]*//')
         
+        # Inyección atómica de supresión de verbose si el archivo original no lo contempla
+        if [[ "$APPEND_LINE" != *"quiet"* ]]; then
+            APPEND_LINE="$APPEND_LINE quiet loglevel=3 logo.nologo vt.global_cursor_default=0"
+        fi
+
         CLEAN_DTB=$(echo "$REAL_DTB" | sed -E 's|^\./||; s|^/||')
         NEW_FDT_LINE="fdt /$CLEAN_DTB"
 
@@ -111,24 +127,20 @@ fi
 # =========================================================================
 # 🌟 CIRUGÍA PLÁSTICA DE RAÍZ EN LOS HEADERS (Inmunización de Receta)
 # =========================================================================
-# Extraemos de forma atómica el apellido exigido por el Kernel en ejecución
 KERNEL_VERSION_BASE=$(echo "$(uname -r)" | cut -d'-' -f1)
 KERNEL_LOCALVERSION=$(echo "$(uname -r)" | sed "s/^$KERNEL_VERSION_BASE//")
 
 echo "🏥 [ASEPSIA DE RAÍZ] Reparando la receta vacía de los Linux Headers..."
 echo "🏷️  Estampando sufijo permanente en las recetas: \"$KERNEL_LOCALVERSION\""
 
-# 1. Corregimos in-situ la receta de arranque del disco si existe
 if [ -f "/boot/config-$(uname -r)" ]; then
   sudo sed -i "s/^CONFIG_LOCALVERSION=.*/CONFIG_LOCALVERSION=\"$KERNEL_LOCALVERSION\"/" /boot/config-$(uname -r)
 fi
 
-# 2. Corregimos in-situ el archivo de configuración interno de los headers instalados
 if [ -f "/usr/src/linux-headers-$(uname -r)/.config" ]; then
   sudo sed -i "s/^CONFIG_LOCALVERSION=.*/CONFIG_LOCALVERSION=\"$KERNEL_LOCALVERSION\"/" /usr/src/linux-headers-$(uname -r)/.config
 fi
 
-# 3. Obligamos a los headers a asimilar la nueva firma y preparar los scripts nativos
 if [ -d "/usr/src/linux-headers-$(uname -r)" ]; then
   echo "🛠️  Sincronizando estructuras nativas de los cabeceras..."
   cd /usr/src/linux-headers-$(uname -r)

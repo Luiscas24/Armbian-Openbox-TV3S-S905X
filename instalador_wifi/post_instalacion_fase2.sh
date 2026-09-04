@@ -1,5 +1,6 @@
 #!/bin/bash
 # 🧪 SCRIPT EN MODO PRUEBA DE QA: Triple Candado Forense Completo y Control Atómico
+# 🛡️ Edición Ultra-Estable: Blindaje Térmico, Eléctrico y de Red para TV Boxes
 
 # --- AUTO-SOLICITUD DE PERMISOS ROOT ---
 if [ "$EUID" -ne 0 ]; then
@@ -27,17 +28,31 @@ make scripts >/dev/null 2>&1
 cd "$DIR_BASE"
 # =========================================================================
 
-echo "🛠️ Compilando el controlador Realtek de forma nativa sobre el kernel actual ($(uname -r))..."
+echo "🛠️ Preparando el entorno del controlador Realtek nativo..."
 cd ./rtl8189ES_linux
 
 if [ -f "Makefile" ]; then
   echo "🧹 Limpiando residuos de compilaciones anteriores..."
   make clean >/dev/null 2>&1
+  
+  # =========================================================================
+  # 💉 INYECCIÓN DE ESTABILIDAD ANTIAHORRO EN CÓDIGO FUENTE (CAPA BINARIA)
+  # =========================================================================
+  echo "🧬 Extirpando rutinas de ahorro de energía (IPS/LPS) directamente del código C..."
+  
+  # Forzar bandera a 'n' en cualquier archivo de construcción o configuración
+  find . -type f \( -name "Makefile" -o -name "autoconf.h" -o -name "Kconfig" \) -exec sed -i 's/CONFIG_POWER_SAVING = y/CONFIG_POWER_SAVING = n/g' {} +
+  find . -type f \( -name "Makefile" -o -name "autoconf.h" -o -name "Kconfig" \) -exec sed -i 's/CONFIG_POWER_SAVING\s*=.*y/CONFIG_POWER_SAVING = n/g' {} +
+  
+  # Desactivar las definiciones del preprocesador C para asegurar consistencia
+  find . -type f -name "autoconf.h" -exec sed -i 's/#define CONFIG_POWER_SAVING/\/\/ #define CONFIG_POWER_SAVING/g' {} +
+  # =========================================================================
 fi
 
 # =========================================================================
-# ⚠️ TU LÍNEA DE COMPILACIÓN ORIGINAL (Mantiene el fallo real del Vermagic)
+# ⚙️ COMPILACIÓN DEL CONTROLADOR (Binario ya inmunizado contra IPS/LPS)
 # =========================================================================
+echo "🛠️ Compilando el controlador Realtek sobre el kernel actual ($(uname -r))..."
 make -j$(nproc) KSRC=/usr/src/linux-headers-$(uname -r) ARCH=arm64 modules
 
 # 1. VALIDACIÓN INMEDIATA DE LA COMPILACIÓN
@@ -60,9 +75,39 @@ echo "🔄 Registrando el módulo de forma permanente en el sistema..."
 depmod -a
 
 # =========================================================================
+# ⚙️ PARÁMETRO DE ESTABILIDAD OS: DIRECTIVAS PARA MODPROBE
+# =========================================================================
+echo "⚙️ Creando reglas de persistencia para el gestor de módulos (modprobe.d)..."
+mkdir -p /etc/modprobe.d
+
+cat << 'EOF' > /etc/modprobe.d/8189es.conf
+# Archivo generado automáticamente para asegurar estabilidad sin fricción de usuario
+options 8189es rtw_power_mgnt=0 rtw_ips_mode=0 rtw_lps_enable=0
+EOF
+
+if [ $? -ne 0 ]; then
+  echo "❌ [ERROR] No se pudo escribir la configuración de estabilidad en /etc/modprobe.d/"
+  exit 1
+fi
+# =========================================================================
+
+# =========================================================================
+# 🎛️ CONFIGURACIÓN GLOBAL DEL GESTOR DE RED DEL OS (EVITA SUSPENSIÓN POR SOFTWARE)
+# =========================================================================
+if [ -d "/etc/NetworkManager/conf.d" ]; then
+  echo "📡 Blindando NetworkManager contra comandos de suspensión inalámbrica..."
+  cat << 'EOF' > /etc/NetworkManager/conf.d/default-wifi-powersave-on.conf
+[connection]
+# 2 desactiva por completo el ahorro de energía en la interfaz a nivel de sistema operativo
+wifi.powersave=2
+EOF
+  systemctl restart NetworkManager >/dev/null 2>&1
+fi
+# =========================================================================
+
+# =========================================================================
 # 🛡️ CANDADO 1: AUDITORÍA DE VERMAGIC AVANZADA (Fidelidad en Disco)
 # =========================================================================
-# Capturamos la cadena completa, limpiando espacios invisibles redundantes
 VERMAGIC_REAL=$(modinfo -F vermagic /lib/modules/$(uname -r)/kernel/drivers/net/wireless/8189es.ko | awk '{$1=$1; print}')
 KERNEL_ACTIVO=$(uname -r)
 
@@ -70,7 +115,6 @@ echo "🔬 [AUDITORÍA DE TEXTO] Inspeccionando consistencia cruda:"
 echo "   ➔ String en Disco:  '$VERMAGIC_REAL'"
 echo "   ➔ Exigencia Kernel: '$KERNEL_ACTIVO'"
 
-# Doble corchete para manejo atómico de espacios. El patrón == * * valida match parcial exacto.
 if [[ "$VERMAGIC_REAL" != *"$KERNEL_ACTIVO"* ]]; then
   echo "-------------------------------------------------------------------------"
   echo "❌ [CANDADO 1: DETENIDO EN SECO] ¡Falso Positivo detectado en disco!"
