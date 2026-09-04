@@ -5,7 +5,7 @@
 # 🤖 Coautor:      Asistente de IA - Gemini - (Bajo estricta dirección arquitectónica)
 # 🌐 Repo git:     https://github.com/Luiscas24/armbian-tv3s-toolbox
 # 📜 Licencia:     GPL-3.0
-# 🛠️ Versión:      1.1.0 (Corrección de Menú, Arreglo de Pantalla Negra y Picom Compositor)
+# 🛠️ Versión:      1.2.0 (Estandarización de Wallpaper, Fix Menú, Arreglo Pantalla Negra y Picom)
 # =========================================================================
 # Descripción: Automatiza la instalación desatendida de un entorno modular
 #              ultraligero basado en Openbox Puro. Delega el escritorio a
@@ -68,11 +68,19 @@ dbus-uuidgen --ensure 2>/dev/null || true
 echo "🎨 3.5 Desplegando fondo de pantalla oficial integrado en la suite..."
 mkdir -p /usr/share/backgrounds
 
-if [ -f armbian-tv3s-wallpaper.jpg ]; then
-    cp armbian-tv3s-wallpaper.jpg /usr/share/backgrounds/Armbian_trianglify_random_blue.jpg
-    chmod 644 /usr/share/backgrounds/Armbian_trianglify_random_blue.jpg
+WALLPAPER_NAME="Armbian_trianglify_random_blue.jpg"
+WALLPAPER_DESTINO="/usr/share/backgrounds/$WALLPAPER_NAME"
+
+if [ -f "$WALLPAPER_NAME" ]; then
+    cp "$WALLPAPER_NAME" "$WALLPAPER_DESTINO"
+    chmod 644 "$WALLPAPER_DESTINO"
+    echo "✅ [OK] Fondo '$WALLPAPER_NAME' instalado exitosamente en $WALLPAPER_DESTINO."
+elif [ -f armbian-tv3s-wallpaper.jpg ]; then
+    cp armbian-tv3s-wallpaper.jpg "$WALLPAPER_DESTINO"
+    chmod 644 "$WALLPAPER_DESTINO"
+    echo "ℹ️ [INFO] Se migró 'armbian-tv3s-wallpaper.jpg' a '$WALLPAPER_DESTINO'."
 else
-    echo "⚠️ [INFO] Archivo 'armbian-tv3s-wallpaper.jpg' no encontrado en el origen. Saltando integración visual."
+    echo "⚠️ [INFO] No se encontró el archivo '$WALLPAPER_NAME' en la ruta de origen local. Saltando copia física."
 fi
 
 # =========================================================================
@@ -103,7 +111,7 @@ echo "⚙️ 4. Programando inicio de componentes con retardo secuencial y compo
 
 mkdir -p "$USER_HOME/.config/openbox"
 
-# ---- [CAMBIO CRÍTICO: FIJAMOS EL PERFIL DE DESKTOP DE FORMA EXPLÍCITA Y PICOM] ----
+# ---- [AJUSTE DE TIEMPOS: RETARDO SECUENCIAL PARA CARGA SEGURA DE WALLPAPER] ----
 cat << 'EOF' > "$USER_HOME/.config/openbox/autostart"
 if [ -z "$DBUS_SESSION_BUS_ADDRESS" ] && [ -x /usr/bin/dbus-launch ]; then
     eval $(dbus-launch --sh-syntax --exit-with-session)
@@ -111,7 +119,7 @@ fi
 sleep 1
 picom --backend xrender --vsync &
 tint2 &
-pcmanfm --desktop --profile default &
+(sleep 1 && pcmanfm --desktop --profile default) &
 EOF
 
 # ---- [INTEGRACIÓN DE MENU.XML PARA EVITAR ERROR DE ROOT-MENU] ----
@@ -138,10 +146,10 @@ echo "🎨 Generando archivos de configuración del escritorio para PCManFM..."
 
 mkdir -p "$USER_HOME/.config/pcmanfm/default"
 
-cat << 'EOF' > "$USER_HOME/.config/pcmanfm/default/desktop-items-0.conf"
+cat << EOF > "$USER_HOME/.config/pcmanfm/default/desktop-items-0.conf"
 [*]
 wallpaper_mode=stretch
-wallpaper=/usr/share/backgrounds/Armbian_trianglify_random_blue.jpg
+wallpaper=$WALLPAPER_DESTINO
 desktop_bg=#000000
 desktop_fg=#ffffff
 show_documents=0
@@ -159,7 +167,7 @@ fi
 sleep 1
 picom --backend xrender --vsync &
 tint2 &
-pcmanfm --desktop --profile default &
+(sleep 1 && pcmanfm --desktop --profile default) &
 EOF
 
 cp "$USER_HOME/.config/openbox/menu.xml" /root/.config/openbox/menu.xml 2>/dev/null || true
@@ -231,6 +239,8 @@ done
 chvt 7 2>/dev/null || chvt 1 2>/dev/null
 
 if [ -e /tmp/.X11-unix/X0 ]; then
+    DISPLAY=:0 sudo -u "$REAL_USER" pcmanfm --desktop-off 2>/dev/null || true
+    DISPLAY=:0 sudo -u "$REAL_USER" pcmanfm --desktop --profile default &
     DISPLAY=:0 sudo -u "$REAL_USER" notify-send "Armbian TV3S" "¡Interfaz gráfica restaurada con éxito! Openbox y Tint2 están activos."
 else
     echo "⚠️ El servidor grafico tardo demasiado en responder."
