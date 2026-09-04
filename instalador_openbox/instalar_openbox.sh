@@ -91,16 +91,23 @@ rm -f /var/lib/lightdm/.cache/lightdm-gtk-greeter/state 2>/dev/null || true
 echo "⚙️ 4. Programando inicio de componentes con retardo secuencial..."
 
 mkdir -p "$USER_HOME/.config/openbox"
+
+# ---- [CAMBIO CRÍTICO: FIJAMOS EL PERFIL DE DESKTOP DE FORMA EXPLÍCITA] ----
+# Forzamos a PCManFM a usar el perfil 'default' para que no busque carpetas variables
 cat << 'EOF' > "$USER_HOME/.config/openbox/autostart"
 if [ -z "$DBUS_SESSION_BUS_ADDRESS" ] && [ -x /usr/bin/dbus-launch ]; then
     eval $(dbus-launch --sh-syntax --exit-with-session)
 fi
 sleep 1
 tint2 &
-pcmanfm --desktop &
+pcmanfm --desktop --profile default &
 EOF
 
+# ---- [INTEGRACIÓN DE CONFIGURACIÓN ESTÁTICA PARA EL PERFIL DEFAULT] ----
+echo "🎨 Generando archivos de configuración del escritorio para PCManFM..."
+
 mkdir -p "$USER_HOME/.config/pcmanfm/default"
+
 cat << 'EOF' > "$USER_HOME/.config/pcmanfm/default/desktop-items-0.conf"
 [*]
 wallpaper_mode=stretch
@@ -110,16 +117,45 @@ desktop_fg=#ffffff
 show_documents=0
 show_trash=0
 show_mounts=0
+desktop_show_wm_menu=1
 EOF
 
+# Clonar configuraciones idénticas para el entorno de root por persistencia
 mkdir -p /root/.config/openbox
-cp "$USER_HOME/.config/openbox/autostart" /root/.config/openbox/autostart
+cat << 'EOF' > /root/.config/openbox/autostart
+if [ -z "$DBUS_SESSION_BUS_ADDRESS" ] && [ -x /usr/bin/dbus-launch ]; then
+    eval $(dbus-launch --sh-syntax --exit-with-session)
+fi
+sleep 1
+tint2 &
+pcmanfm --desktop --profile default &
+EOF
 
 mkdir -p /root/.config/pcmanfm/default
 cp "$USER_HOME/.config/pcmanfm/default/desktop-items-0.conf" /root/.config/pcmanfm/default/desktop-items-0.conf
+# -------------------------------------------------------------------------
 
+# =========================================================================
+# ⚙️ INYECCIÓN UX: EVITAR PREGUNTAS AL EJECUTAR LANZADORES .DESKTOP
+# =========================================================================
+echo "🔧 [OPTIMIZACIÓN UX] Configurando PCManFM para ejecución directa de lanzadores..."
+FICHERO_LIBFM_USER="$USER_HOME/.config/libfm/libfm.conf"
+FICHERO_LIBFM_ROOT="/root/.config/libfm/libfm.conf"
+
+mkdir -p "$(dirname "$FICHERO_LIBFM_USER")"
+mkdir -p "$(dirname "$FICHERO_LIBFM_ROOT")"
+
+cat << 'EOF' > "$FICHERO_LIBFM_USER"
+[Gtk]
+quick_exec=1
+EOF
+
+cp "$FICHERO_LIBFM_USER" "$FICHERO_LIBFM_ROOT"
+
+# ---- [ASIGNACIÓN FINAL DE PROPIEDADES SOBERANAS] ----
 chown -R "$REAL_USER:$(id -gn "$REAL_USER")" "$USER_HOME/.config"
 chown -R root:root /root/.config
+# =========================================================================
 
 # =========================================================================
 # 🚀 INYECCIÓN AUTÓNOMA Y ATÓMICA DE 'Cambiar_a_modo_grafico'
