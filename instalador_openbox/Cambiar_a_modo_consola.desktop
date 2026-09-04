@@ -1,0 +1,10 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=Pasar a Consola Pura
+Comment=Apaga el entorno gráfico para liberar RAM y trabajar en la terminal
+Exec=xfce4-terminal -e "bash -c 'DISPLAY=:0 notify-send \"Armbian TV3S\" \"🛑 Apagando interfaz gráfica... Liberando memoria RAM.\"; sleep 2; sudo systemctl isolate multi-user.target'"
+Icon=utilities-terminal
+Terminal=false
+Categories=System;Settings;
+StartupNotify=false
