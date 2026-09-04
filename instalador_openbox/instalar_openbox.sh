@@ -5,7 +5,7 @@
 # 🤖 Coautor:      Asistente de IA - Gemini - (Bajo estricta dirección arquitectónica)
 # 🌐 Repo git:     https://github.com/Luiscas24/armbian-tv3s-toolbox
 # 📜 Licencia:     GPL-3.0
-# 🛠️ Versión:      1.2.0 (Estandarización de Wallpaper, Fix Menú, Arreglo Pantalla Negra y Picom)
+# 🛠️ Versión:      1.3.0 (Integración de Wallpaper en LightDM Greeter)
 # =========================================================================
 # Descripción: Automatiza la instalación desatendida de un entorno modular
 #              ultraligero basado en Openbox Puro. Delega el escritorio a
@@ -36,7 +36,7 @@ USER_HOME=$(eval echo "~$REAL_USER")
 echo "🔄 1. Actualizando índices de paquetes..."
 apt-get update
 
-echo "📦 2. Instalando Openbox, Tint2, Picom (Compositor anti-glitch), gestor de escritorio tradicional y servidor gráfico..."
+echo "📦 2. Instalando Openbox, Tint2, Picom, gestor de escritorio y LightDM Greeter..."
 apt-get install -y --no-install-recommends \
     -o Dpkg::Options::="--force-confdef" \
     -o Dpkg::Options::="--force-confold" \
@@ -51,7 +51,8 @@ apt-get install -y --no-install-recommends \
     picom \
     pcmanfm \
     lxterminal \
-    lightdm
+    lightdm \
+    lightdm-gtk-greeter
 
 echo "🏥 3. Inmunizando variables globales de entorno y D-Bus..."
 for var in 'XDG_CONFIG_DIRS="/etc/xdg:/etc"' 'XDG_DATA_DIRS="/usr/share:/usr/local/share"'; do
@@ -63,7 +64,7 @@ dbus-uuidgen --ensure=/etc/machine-id
 dbus-uuidgen --ensure 2>/dev/null || true
 
 # =========================================================================
-# 🎨 INTEGRACIÓN FÍSICA DEL WALLPAPER LOCAL NATIVO
+# 🎨 INTEGRACIÓN FÍSICA DEL WALLPAPER LOCAL NATIVO Y LIGHTDM
 # =========================================================================
 echo "🎨 3.5 Desplegando fondo de pantalla oficial integrado en la suite..."
 mkdir -p /usr/share/backgrounds
@@ -83,6 +84,19 @@ else
     echo "⚠️ [INFO] No se encontró el archivo '$WALLPAPER_NAME' en la ruta de origen local. Saltando copia física."
 fi
 
+echo "🎨 Configurando el fondo de pantalla en el inicio de sesión (LightDM)..."
+cat << EOF > /etc/lightdm/lightdm-gtk-greeter.conf
+[greeter]
+background=$WALLPAPER_DESTINO
+theme-name=Adwaita
+icon-theme-name=Adwaita
+font-name=Sans 10
+xft-antialias=true
+xft-dpi=96
+xft-hintstyle=hintslight
+xft-rgba=rgb
+EOF
+
 # =========================================================================
 # ⚙️ INTEGRACIÓN ATÓMICA: FORZAR SESIÓN POR DEFECTO EN LIGHTDM
 # =========================================================================
@@ -98,6 +112,7 @@ user-session=openbox
 autologin-session=openbox
 type=xlocal
 xserver-command=X -s 0 -dpms
+greeter-session=lightdm-gtk-greeter
 EOF
 
 rm -f "$USER_HOME/.dmrc" 2>/dev/null || true
