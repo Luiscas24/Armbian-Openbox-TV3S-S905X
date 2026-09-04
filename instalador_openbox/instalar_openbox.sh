@@ -5,7 +5,7 @@
 # 🤖 Coautor:      Asistente de IA - Gemini - (Bajo estricta dirección arquitectónica)
 # 🌐 Repo git:     https://github.com/Luiscas24/armbian-tv3s-toolbox
 # 📜 Licencia:     GPL-3.0
-# 🛠️ Versión:      1.0.0
+# 🛠️ Versión:      1.1.0 (Corrección de Menú, Arreglo de Pantalla Negra y Picom Compositor)
 # =========================================================================
 # Descripción: Automatiza la instalación desatendida de un entorno modular
 #              ultraligero basado en Openbox Puro. Delega el escritorio a
@@ -36,7 +36,7 @@ USER_HOME=$(eval echo "~$REAL_USER")
 echo "🔄 1. Actualizando índices de paquetes..."
 apt-get update
 
-echo "📦 2. Instalando Openbox, Tint2, gestor de escritorio tradicional y servidor gráfico..."
+echo "📦 2. Instalando Openbox, Tint2, Picom (Compositor anti-glitch), gestor de escritorio tradicional y servidor gráfico..."
 apt-get install -y --no-install-recommends \
     -o Dpkg::Options::="--force-confdef" \
     -o Dpkg::Options::="--force-confold" \
@@ -48,6 +48,7 @@ apt-get install -y --no-install-recommends \
     openbox \
     obconf \
     tint2 \
+    picom \
     pcmanfm \
     lxterminal \
     lightdm
@@ -81,6 +82,16 @@ echo "🔧 Reconfigurando las preferencias globales de LightDM para Openbox..."
 sed -i 's/^#user-session=.*/user-session=openbox/' /etc/lightdm/lightdm.conf 2>/dev/null || true
 sed -i 's/^user-session=.*/user-session=openbox/' /etc/lightdm/lightdm.conf 2>/dev/null || true
 
+# Garantizar archivo de configuración explícito para evitar pantalla en negro al arrancar
+mkdir -p /etc/lightdm/lightdm.conf.d/
+cat << 'EOF' > /etc/lightdm/lightdm.conf.d/01-armbian-openbox.conf
+[Seat:*]
+user-session=openbox
+autologin-session=openbox
+type=xlocal
+xserver-command=X -s 0 -dpms
+EOF
+
 rm -f "$USER_HOME/.dmrc" 2>/dev/null || true
 rm -f /root/.dmrc 2>/dev/null || true
 rm -f /var/lib/lightdm/.cache/lightdm-gtk-greeter/state 2>/dev/null || true
@@ -88,20 +99,39 @@ rm -f /var/lib/lightdm/.cache/lightdm-gtk-greeter/state 2>/dev/null || true
 # =========================================================================
 # ⚙️ CONFIGURACIÓN DEL ARRANQUE EN VIVO SECUENCIAL
 # =========================================================================
-echo "⚙️ 4. Programando inicio de componentes con retardo secuencial..."
+echo "⚙️ 4. Programando inicio de componentes con retardo secuencial y compositor visual..."
 
 mkdir -p "$USER_HOME/.config/openbox"
 
-# ---- [CAMBIO CRÍTICO: FIJAMOS EL PERFIL DE DESKTOP DE FORMA EXPLÍCITA] ----
-# Forzamos a PCManFM a usar el perfil 'default' para que no busque carpetas variables
+# ---- [CAMBIO CRÍTICO: FIJAMOS EL PERFIL DE DESKTOP DE FORMA EXPLÍCITA Y PICOM] ----
 cat << 'EOF' > "$USER_HOME/.config/openbox/autostart"
 if [ -z "$DBUS_SESSION_BUS_ADDRESS" ] && [ -x /usr/bin/dbus-launch ]; then
     eval $(dbus-launch --sh-syntax --exit-with-session)
 fi
 sleep 1
+picom --backend xrender --vsync &
 tint2 &
 pcmanfm --desktop --profile default &
 EOF
+
+# ---- [INTEGRACIÓN DE MENU.XML PARA EVITAR ERROR DE ROOT-MENU] ----
+echo "📋 Desplegando archivo de menú raíz (menu.xml) para Openbox..."
+if [ -f /etc/xdg/openbox/menu.xml ]; then
+    cp /etc/xdg/openbox/menu.xml "$USER_HOME/.config/openbox/menu.xml"
+else
+    cat << 'EOF' > "$USER_HOME/.config/openbox/menu.xml"
+<?xml version="1.0" encoding="UTF-8"?>
+<openbox_menu xmlns="http://openbox.org/3.4/menu">
+<menu id="root-menu" label="Openbox">
+  <item label="Terminal"><action name="Execute"><execute>lxterminal</execute></action></item>
+  <item label="Navegador de Archivos"><action name="Execute"><execute>pcmanfm</execute></action></item>
+  <separator />
+  <item label="Reconfigurar"><action name="Reconfigure" /></item>
+  <item label="Salir"><action name="Exit" /></item>
+</menu>
+</openbox_menu>
+EOF
+fi
 
 # ---- [INTEGRACIÓN DE CONFIGURACIÓN ESTÁTICA PARA EL PERFIL DEFAULT] ----
 echo "🎨 Generando archivos de configuración del escritorio para PCManFM..."
@@ -127,9 +157,12 @@ if [ -z "$DBUS_SESSION_BUS_ADDRESS" ] && [ -x /usr/bin/dbus-launch ]; then
     eval $(dbus-launch --sh-syntax --exit-with-session)
 fi
 sleep 1
+picom --backend xrender --vsync &
 tint2 &
 pcmanfm --desktop --profile default &
 EOF
+
+cp "$USER_HOME/.config/openbox/menu.xml" /root/.config/openbox/menu.xml 2>/dev/null || true
 
 mkdir -p /root/.config/pcmanfm/default
 cp "$USER_HOME/.config/pcmanfm/default/desktop-items-0.conf" /root/.config/pcmanfm/default/desktop-items-0.conf
