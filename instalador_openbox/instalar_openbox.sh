@@ -5,7 +5,7 @@
 # 🤖 Coautor:      Asistente de IA - Gemini - (Bajo estricta dirección arquitectónica)
 # 🌐 Repo git:     https://github.com/Luiscas24/armbian-tv3s-toolbox
 # 📜 Licencia:     GPL-3.0
-# 🛠️ Versión:      1.0.0
+# 🛠️ Versión:      1.1.0 (Corrección de Menú, Arreglo de Pantalla Negra y Picom Compositor)
 # =========================================================================
 # Descripción: Automatiza la instalación desatendida de un entorno modular
 #              ultraligero basado en Openbox Puro. Delega el escritorio a
@@ -13,145 +13,284 @@
 #              a LightDM a usar Openbox e inyecta el activador gráfico.
 # =========================================================================
 
-set -e
-
-# Autogestión de privilegios de root con sudo
+# --- AUTO-SOLICITUD DE PERMISOS ROOT SILENCIOSA (Autogestionada) ---
 if [ "$EUID" -ne 0 ]; then
-  echo "🔐 Solicitando privilegios de administrador (sudo) para continuar..."
-  exec sudo "$0" "$@"
-  exit 1
+    exec sudo "$0" "$@"
+    exit 1
 fi
 
-echo "================================================================="
-echo "📦 Iniciando instalación de Armbian Openbox v1.0.0..."
-echo "================================================================="
+# --- AUTOCORRECCIÓN DE ENTORNO Y RUTAS (Blindada para TV Box) ---
+DIR_REAL_INSTALADOR="$(cd "$(dirname "${BASH_SOURCE}")" && pwd)"
+cd "$DIR_REAL_INSTALADOR"
 
-# -------------------------------------------------------------------------
-# 1. ACTUALIZACIÓN E INSTALACIÓN DE PAQUETES Y DEPENDENCIAS
-# -------------------------------------------------------------------------
-echo "📥 Actualizando repositorios e instalando dependencias base..."
+export PATH=$PATH:/sbin:/usr/sbin:/usr/local/sbin
+export DEBIAN_FRONTEND=noninteractive
+export DEBIAN_PRIORITY=critical
+
+# --- DETECCIÓN DETERMINISTA DEL USUARIO REAL ---
+REAL_USER="$SUDO_USER"
+[ -z "$REAL_USER" ] && REAL_USER=$(logname 2>/dev/null)
+[ -z "$REAL_USER" ] && REAL_USER=$USER
+USER_HOME=$(eval echo "~$REAL_USER")
+
+echo "🔄 1. Actualizando índices de paquetes..."
 apt-get update
-apt-get install -y \
-  openbox \
-  tint2 \
-  pcmanfm \
-  picom \
-  lightdm \
-  lightdm-gtk-greeter \
-  polkitd \
-  pkexec \
-  xorg \
-  x11-xserver-utils \
-  feh \
-  lxterminal \
-  pulseaudio \
-  pavucontrol \
-  dbus-x11
 
-# -------------------------------------------------------------------------
-# 2. GESTIÓN DE ENERGÍA Y CONFIGURACIÓN DE POLKIT
-# -------------------------------------------------------------------------
-echo "⚡ Configurando permisos de energía e inhabilitando suspensión..."
+echo "📦 2. Instalando Openbox, Tint2, Picom (Compositor anti-glitch), gestor de escritorio tradicional y servidor gráfico..."
+apt-get install -y --no-install-recommends \
+    -o Dpkg::Options::="--force-confdef" \
+    -o Dpkg::Options::="--force-confold" \
+    dbus-x11 \
+    dbus \
+    libpam-systemd \
+    xorg \
+    xinit \
+    openbox \
+    obconf \
+    tint2 \
+    picom \
+    pcmanfm \
+    lxterminal \
+    lightdm
 
-# Asignar grupos requeridos al usuario lightdm
-usermod -aG power,sudo,autologin,nopasswdlogin lightdm 2>/dev/null || true
+echo "🏥 3. Inmunizando variables globales de entorno y D-Bus..."
+for var in 'XDG_CONFIG_DIRS="/etc/xdg:/etc"' 'XDG_DATA_DIRS="/usr/share:/usr/local/share"'; do
+    grep -q "${var%%=*}" /etc/environment || echo "$var" >> /etc/environment
+done
 
-# Enmascarar suspensión e hibernación en systemd (Incompatibles con S905X)
-systemctl mask suspend.target hibernate.target hybrid-sleep.target suspend-then-hibernate.target
+rm -f /etc/machine-id /var/lib/dbus/machine-id
+dbus-uuidgen --ensure=/etc/machine-id
+dbus-uuidgen --ensure 2>/dev/null || true
 
-# Crear regla de Polkit en formato JavaScript (Debian 12 / Bookworm)
-mkdir -p /etc/polkit-1/rules.d/
-cat << 'EOF' > /etc/polkit-1/rules.d/10-armbian-power.rules
-polkit.addRule(function(action, subject) {
-    if (action.id == "org.freedesktop.login1.reboot" ||
-        action.id == "org.freedesktop.login1.reboot-multiple-sessions" ||
-        action.id == "org.freedesktop.login1.power-off" ||
-        action.id == "org.freedesktop.login1.power-off-multiple-sessions") {
-        return polkit.Result.YES;
-    }
-});
-EOF
-chmod 644 /etc/polkit-1/rules.d/10-armbian-power.rules
+# =========================================================================
+# 🎨 INTEGRACIÓN FÍSICA DEL WALLPAPER LOCAL NATIVO
+# =========================================================================
+echo "🎨 3.5 Desplegando fondo de pantalla oficial integrado en la suite..."
+mkdir -p /usr/share/backgrounds
 
-# Regla de respaldo PKLA
-mkdir -p /etc/polkit-1/localauthority/50-local.d/
-cat << 'EOF' > /etc/polkit-1/localauthority/50-local.d/10-armbian-tv3s-power.pkla
-[Permitir Apagar y Reiniciar sin contrasena]
-Identity=unix-user:lightdm;group:sudo;group:power
-Action=org.freedesktop.login1.reboot;org.freedesktop.login1.reboot-multiple-sessions;org.freedesktop.login1.power-off;org.freedesktop.login1.power-off-multiple-sessions
-ResultAny=yes
-ResultInactive=yes
-ResultActive=yes
-EOF
-
-# -------------------------------------------------------------------------
-# 3. CONFIGURACIÓN VISUAL Y PARÁMETROS DE LIGHTDM GREETER
-# -------------------------------------------------------------------------
-echo "🎨 Configurando interfaz visual y greeter de LightDM..."
-
-# Asegurar alternativas del greeter
-update-alternatives --set lightdm-greeter /usr/share/xgreeters/lightdm-gtk-greeter.desktop 2>/dev/null || true
-
-# Limpiar posibles sobreescrituras en .conf.d
-rm -rf /etc/lightdm/lightdm-gtk-greeter.conf.d/* 2>/dev/null || true
-
-# Escribir configuración principal limpia de LightDM Greeter
-cat << 'EOF' > /etc/lightdm/lightdm-gtk-greeter.conf
-[greeter]
-background=/usr/share/backgrounds/Armbian_trianglify_random_blue.jpg
-theme-name=Adwaita
-icon-theme-name=Adwaita
-font-name=Sans 10
-xft-antialias=true
-xft-dpi=96
-xft-hintstyle=hintslight
-xft-rgba=rgb
-indicators=~host;~spacer;~clock;~spacer;~language;~session;~power
-restrict-standby-buttons=true
-EOF
-
-# -------------------------------------------------------------------------
-# 4. CONFIGURACIÓN DE ENTORNO DE USUARIO (OPENBOX & AUTOSTART)
-# -------------------------------------------------------------------------
-echo "⚙️ Configurando archivos de inicio de Openbox para el usuario..."
-
-TARGET_USER="${SUDO_USER:-$USER}"
-if [ "$TARGET_USER" = "root" ]; then
-    TARGET_USER="armbian"
+if [ -f armbian-tv3s-wallpaper.jpg ]; then
+    cp armbian-tv3s-wallpaper.jpg /usr/share/backgrounds/Armbian_trianglify_random_blue.jpg
+    chmod 644 /usr/share/backgrounds/Armbian_trianglify_random_blue.jpg
+else
+    echo "⚠️ [INFO] Archivo 'armbian-tv3s-wallpaper.jpg' no encontrado en el origen. Saltando integración visual."
 fi
 
-USER_HOME=$(eval echo "~$TARGET_USER")
+# =========================================================================
+# ⚙️ INTEGRACIÓN ATÓMICA: FORZAR SESIÓN POR DEFECTO EN LIGHTDM
+# =========================================================================
+echo "🔧 Reconfigurando las preferencias globales de LightDM para Openbox..."
+sed -i 's/^#user-session=.*/user-session=openbox/' /etc/lightdm/lightdm.conf 2>/dev/null || true
+sed -i 's/^user-session=.*/user-session=openbox/' /etc/lightdm/lightdm.conf 2>/dev/null || true
+
+# Garantizar archivo de configuración explícito para evitar pantalla en negro al arrancar
+mkdir -p /etc/lightdm/lightdm.conf.d/
+cat << 'EOF' > /etc/lightdm/lightdm.conf.d/01-armbian-openbox.conf
+[Seat:*]
+user-session=openbox
+autologin-session=openbox
+type=xlocal
+xserver-command=X -s 0 -dpms
+EOF
+
+rm -f "$USER_HOME/.dmrc" 2>/dev/null || true
+rm -f /root/.dmrc 2>/dev/null || true
+rm -f /var/lib/lightdm/.cache/lightdm-gtk-greeter/state 2>/dev/null || true
+
+# =========================================================================
+# ⚙️ CONFIGURACIÓN DEL ARRANQUE EN VIVO SECUENCIAL
+# =========================================================================
+echo "⚙️ 4. Programando inicio de componentes con retardo secuencial y compositor visual..."
 
 mkdir -p "$USER_HOME/.config/openbox"
-mkdir -p "$USER_HOME/.config/tint2"
 
-# Crear archivo autostart para Openbox sin parpadeos/tearing
+# ---- [CAMBIO CRÍTICO: FIJAMOS EL PERFIL DE DESKTOP DE FORMA EXPLÍCITA Y PICOM] ----
 cat << 'EOF' > "$USER_HOME/.config/openbox/autostart"
-# Cargar fondo de pantalla
-feh --bg-fill /usr/share/backgrounds/Armbian_trianglify_random_blue.jpg &
-
-# Panel tint2
-tint2 &
-
-# Compositor picom configurado para evitar tearing sin pantalla negra
+if [ -z "$DBUS_SESSION_BUS_ADDRESS" ] && [ -x /usr/bin/dbus-launch ]; then
+    eval $(dbus-launch --sh-syntax --exit-with-session)
+fi
+sleep 1
 picom --backend xrender --vsync &
+tint2 &
+pcmanfm --desktop --profile default &
 EOF
 
-# Ajustar permisos del directorio de configuración
-chown -R "$TARGET_USER:$TARGET_USER" "$USER_HOME/.config"
+# ---- [INTEGRACIÓN DE MENU.XML PARA EVITAR ERROR DE ROOT-MENU] ----
+echo "📋 Desplegando archivo de menú raíz (menu.xml) para Openbox..."
+if [ -f /etc/xdg/openbox/menu.xml ]; then
+    cp /etc/xdg/openbox/menu.xml "$USER_HOME/.config/openbox/menu.xml"
+else
+    cat << 'EOF' > "$USER_HOME/.config/openbox/menu.xml"
+<?xml version="1.0" encoding="UTF-8"?>
+<openbox_menu xmlns="http://openbox.org/3.4/menu">
+<menu id="root-menu" label="Openbox">
+  <item label="Terminal"><action name="Execute"><execute>lxterminal</execute></action></item>
+  <item label="Navegador de Archivos"><action name="Execute"><execute>pcmanfm</execute></action></item>
+  <separator />
+  <item label="Reconfigurar"><action name="Reconfigure" /></item>
+  <item label="Salir"><action name="Exit" /></item>
+</menu>
+</openbox_menu>
+EOF
+fi
 
+# ---- [INTEGRACIÓN DE CONFIGURACIÓN ESTÁTICA PARA EL PERFIL DEFAULT] ----
+echo "🎨 Generando archivos de configuración del escritorio para PCManFM..."
+
+mkdir -p "$USER_HOME/.config/pcmanfm/default"
+
+cat << 'EOF' > "$USER_HOME/.config/pcmanfm/default/desktop-items-0.conf"
+[*]
+wallpaper_mode=stretch
+wallpaper=/usr/share/backgrounds/Armbian_trianglify_random_blue.jpg
+desktop_bg=#000000
+desktop_fg=#ffffff
+show_documents=0
+show_trash=0
+show_mounts=0
+desktop_show_wm_menu=1
+EOF
+
+# Clonar configuraciones idénticas para el entorno de root por persistencia
+mkdir -p /root/.config/openbox
+cat << 'EOF' > /root/.config/openbox/autostart
+if [ -z "$DBUS_SESSION_BUS_ADDRESS" ] && [ -x /usr/bin/dbus-launch ]; then
+    eval $(dbus-launch --sh-syntax --exit-with-session)
+fi
+sleep 1
+picom --backend xrender --vsync &
+tint2 &
+pcmanfm --desktop --profile default &
+EOF
+
+cp "$USER_HOME/.config/openbox/menu.xml" /root/.config/openbox/menu.xml 2>/dev/null || true
+
+mkdir -p /root/.config/pcmanfm/default
+cp "$USER_HOME/.config/pcmanfm/default/desktop-items-0.conf" /root/.config/pcmanfm/default/desktop-items-0.conf
 # -------------------------------------------------------------------------
-# 5. GENERACIÓN DE SCRIPTS AUXILIARES DE CAMBIO DE MODO
-# -------------------------------------------------------------------------
+
+# =========================================================================
+# ⚙️ INYECCIÓN UX: EVITAR PREGUNTAS AL EJECUTAR LANZADORES .DESKTOP
+# =========================================================================
+echo "🔧 [OPTIMIZACIÓN UX] Configurando PCManFM para ejecución directa de lanzadores..."
+FICHERO_LIBFM_USER="$USER_HOME/.config/libfm/libfm.conf"
+FICHERO_LIBFM_ROOT="/root/.config/libfm/libfm.conf"
+
+mkdir -p "$(dirname "$FICHERO_LIBFM_USER")"
+mkdir -p "$(dirname "$FICHERO_LIBFM_ROOT")"
+
+cat << 'EOF' > "$FICHERO_LIBFM_USER"
+[Gtk]
+quick_exec=1
+EOF
+
+cp "$FICHERO_LIBFM_USER" "$FICHERO_LIBFM_ROOT"
+
+# ---- [ASIGNACIÓN FINAL DE PROPIEDADES SOBERANAS] ----
+chown -R "$REAL_USER:$(id -gn "$REAL_USER")" "$USER_HOME/.config"
+chown -R root:root /root/.config
+# =========================================================================
+
+# =========================================================================
+# 🚀 INYECCIÓN AUTÓNOMA Y ATÓMICA DE 'Cambiar_a_modo_grafico'
+# =========================================================================
+echo "🚀 Generando e instalando 'Cambiar_a_modo_grafico' de forma global..."
+mkdir -p /usr/local/bin
+
+cat << 'EOF' > /usr/local/bin/Cambiar_a_modo_grafico
+#!/bin/bash
+if [ "$EUID" -ne 0 ]; then
+    exec sudo "$0" "$@"
+    exit 1
+fi
+export XDG_CONFIG_DIRS="/etc/xdg:/etc:/usr/share/desktop-base/profiles/xdg:$XDG_CONFIG_DIRS"
+systemctl reload dbus 2>/dev/null || true
+mkdir -p /var/lib/dbus
+dbus-uuidgen --ensure=/etc/machine-id
+dbus-uuidgen --ensure 2>/dev/null || true
+
+REAL_USER="$SUDO_USER"
+[ -z "$REAL_USER" ] && REAL_USER=$(logname 2>/dev/null)
+[ -z "$REAL_USER" ] && REAL_USER=$USER
+REAL_HOME=$(eval echo "~$REAL_USER")
+
+mkdir -p "$REAL_HOME/.config/openbox"
+chown -R "$REAL_USER:$(id -gn "$REAL_USER")" "$REAL_HOME/.config"
+
+systemctl unmask lightdm 2>/dev/null || true
+systemctl enable lightdm 2>/dev/null || true
+systemctl isolate graphical.target
+systemctl restart lightdm 2>/dev/null || true
+
+MAX_INTENTOS=10
+CONTADOR=0
+while [ ! -e /tmp/.X11-unix/X0 ] && [ $CONTADOR -lt $MAX_INTENTOS ]; do
+    sleep 1
+    CONTADOR=$((CONTADOR + 1))
+done
+
+chvt 7 2>/dev/null || chvt 1 2>/dev/null
+
+if [ -e /tmp/.X11-unix/X0 ]; then
+    DISPLAY=:0 sudo -u "$REAL_USER" notify-send "Armbian TV3S" "¡Interfaz gráfica restaurada con éxito! Openbox y Tint2 están activos."
+else
+    echo "⚠️ El servidor grafico tardo demasiado en responder."
+fi
+EOF
+
+chown root:root /usr/local/bin/Cambiar_a_modo_grafico
+chmod 755 /usr/local/bin/Cambiar_a_modo_grafico
+
+# =========================================================================
+# 📁 5. GESTIÓN DE LANZADORES INVERSOS Y EXCEPCIONES DE PRIVILEGIOS
+# =========================================================================
+echo "📁 5. Creando directorios base de Openbox para el entorno de usuario..."
+mkdir -p /etc/xdg/openbox
+if [ -f /etc/xdg/openbox/rc.xml ]; then
+    cp /etc/xdg/openbox/rc.xml /etc/xdg/openbox/rc.xml.bak 2>/dev/null || true
+fi
+
+echo "🔐 [Seguridad] Configurando excepciones de sudoers para cambios de entorno..."
+mkdir -p /etc/sudoers.d
+cat << 'EOF' > /etc/sudoers.d/armbian-tv3s-toggle-rules
+ALL ALL=(ALL) NOPASSWD: /usr/local/bin/Cambiar_a_modo_grafico
+EOF
+chmod 0440 /etc/sudoers.d/armbian-tv3s-toggle-rules
+
+echo "⧉  Copiando accesos directos inversos de la suite..."
+if [ -f Cambiar_a_modo_consola.desktop ]; then
+    chmod 755 Cambiar_a_modo_consola.desktop
+
+    cp Cambiar_a_modo_consola.desktop /usr/share/applications/
+    chown root:root /usr/share/applications/Cambiar_a_modo_consola.desktop
+    chmod 644 /usr/share/applications/Cambiar_a_modo_consola.desktop
+
+    if [ -d "$USER_HOME/Desktop" ]; then
+        DESTINO_DESK="$USER_HOME/Desktop"
+    elif [ -d "$USER_HOME/Escritorio" ]; then
+        DESTINO_DESK="$USER_HOME/Escritorio"
+    else
+        DESTINO_DESK="$USER_HOME"
+    fi
+
+    cp Cambiar_a_modo_consola.desktop "$DESTINO_DESK/"
+    chown root:root "$DESTINO_DESK/Cambiar_a_modo_consola.desktop"
+    chmod 755 "$DESTINO_DESK/Cambiar_a_modo_consola.desktop"
+else
+    echo "⚠️ [INFO] Archivo 'Cambiar_a_modo_consola.desktop' no encontrado en el origen local. Saltando copia."
+fi
+
+# =========================================================================
+# 🚀 GENERACIÓN DE SCRIPTS AUXILIARES DE CAMBIO DE MODO Y ACCESOS DIRECTOS DESKTOP
+# =========================================================================
 echo "🛠️ Generando accesos directos para conmutar entornos..."
 
 # Script para pasar a Modo Gráfico
-cat << 'EOF' > /usr/local/bin/Cambiar_a_modo_grafico
+cat << 'EOF' > /usr/local/bin/Cambiar_a_modo_grafico_aux
 #!/bin/bash
 systemctl set-default graphical.target
 systemctl start lightdm
 EOF
-chmod +x /usr/local/bin/Cambiar_a_modo_grafico
+chmod +x /usr/local/bin/Cambiar_a_modo_grafico_aux
 
 # Script para pasar a Modo Consola
 cat << 'EOF' > /usr/local/bin/Cambiar_a_modo_consola
@@ -161,25 +300,31 @@ systemctl stop lightdm
 EOF
 chmod +x /usr/local/bin/Cambiar_a_modo_consola
 
-# -------------------------------------------------------------------------
-# 6. REINICIO DE SERVICIOS Y BLOQUE FINAL DE INSTRUCCIONES
-# -------------------------------------------------------------------------
-echo "🔄 Recargando demonios de sistema..."
+# Copiar accesos directos desde la carpeta del instalador al escritorio del usuario
+DESKTOP_DIR="/home/$SUDO_USER/Desktop"
+if [ ! -d "$DESKTOP_DIR" ]; then
+    DESKTOP_DIR="/home/$SUDO_USER/Escritorio"
+fi
 
-systemctl restart polkit.service 2>/dev/null || true
-systemctl restart systemd-logind.service 2>/dev/null || true
+if [ -f "$DIR_REAL_INSTALADOR/recursos/modo-consola.desktop" ] && [ -f "$DIR_REAL_INSTALADOR/recursos/modo-grafico.desktop" ]; then
+    cp "$DIR_REAL_INSTALADOR/recursos/modo-consola.desktop" "$DESKTOP_DIR/"
+    cp "$DIR_REAL_INSTALADOR/recursos/modo-grafico.desktop" "$DESKTOP_DIR/"
+    chmod +x "$DESKTOP_DIR/modo-consola.desktop" "$DESKTOP_DIR/modo-grafico.desktop"
+    chown $SUDO_USER:$SUDO_USER "$DESKTOP_DIR/modo-consola.desktop" "$DESKTOP_DIR/modo-grafico.desktop"
+fi
 
-echo "================================================================="
-echo "✅ ¡Instalación de Armbian Openbox v1.0.0 completada exitosamente!"
-echo "================================================================="
+systemctl enable lightdm
+systemctl set-default graphical.target
+
+# =========================================================================
+# 🎉 BLOQUE FINAL DE INSTRUCCIONES DE USO ORIGINALES COMPLETO
+# =========================================================================
+echo "✅ 5. ¡Instalación completada con éxito!"
+echo "-------------------------------------------------------------------------"
+echo " ¡La interfaz gráfica ahora es un comando nativo del sistema!"
+echo " Puede iniciar el entorno desde cualquier terminal ejecutando: Cambiar_a_modo_grafico"
+echo " O simplemente reiniciando la TV Box con el comando: sudo reboot"
 echo ""
-echo "📌 INSTRUCCIONES DE USO:"
-echo " 1. Para iniciar el entorno gráfico ahora mismo:"
-echo "    Cambiar_a_modo_grafico"
-echo ""
-echo " 2. Si deseas regresar permanentemente al arranque en consola TTY:"
-echo "    Cambiar_a_modo_consola"
-echo ""
-echo " 3. Se han habilitado unicamente las opciones 'Apagar' y 'Reiniciar'."
-echo "    La suspensión e hibernación están deshabilitadas por hardware."
-echo "================================================================="
+echo " Si necesita volver al modo de solo consola, haga doble clic en el icono"
+echo " 'Pasar a Consola Pura' desde su escritorio o menú de aplicaciones."
+echo "-------------------------------------------------------------------------"
