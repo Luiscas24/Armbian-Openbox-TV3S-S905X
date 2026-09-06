@@ -64,6 +64,12 @@ sudo dpkg --configure -a
 # 📸 FOTOGRAFÍA PREVIA: Capturamos la versión exacta instalada del núcleo objetivo
 KERNEL_PKG_ANTES=$(dpkg-query -W -f='${Version}' linux-image-current-meson64 2>/dev/null)
 
+# =========================================================================
+# 🔓 AQUÍ VA LA LÍNEA DE LIBERACIÓN TEMPORAL (JUSTO AQUÍ)
+# =========================================================================
+apt-mark unhold linux-image-current-meson64 linux-headers-current-meson64 linux-dtb-current-meson64 >/dev/null 2>&1 || true
+# =========================================================================
+
 echo "📦 Instalamos las herramientas de forma inteligente usando APT (Offline)..."
 sudo apt install -y --no-install-recommends "$DIR_REAL_INSTALADOR/dependencias_offline"/*.deb
 if [ $? -ne 0 ]; then
@@ -72,6 +78,20 @@ if [ $? -ne 0 ]; then
 fi
 
 echo ""
+
+# =========================================================================
+# 🛡️ ¡AQUÍ VA EL BLOQUE! (JUSTO EN LA LÍNEA 57, DEBAJO DEL IF DE APT)
+# =========================================================================
+echo "🛡️  Inyectando triple candado de control de estado en APT..."
+if apt-mark hold linux-image-current-meson64 linux-headers-current-meson64 linux-dtb-current-meson64 >/dev/null 2>&1; then
+    echo "[+] Candado 1: Kernel inmunizado con éxito [hold]"
+    echo "[+] Candado 2: Cabeceras de arquitectura congeladas con éxito [hold]"
+    echo "[+] Candado 3: Árbol de dispositivos (DTB) bloqueado con éxito [hold]"
+else
+    echo "⚠️ [AVISO] No se pudieron bloquear los paquetes en APT, verifica el estado del gestor."
+fi
+echo ""
+# =========================================================================
 
 # 📸 FOTOGRAFÍA POSTERIOR: Verificamos el estado del paquete tras el comando de APT
 KERNEL_PKG_DESPUES=$(dpkg-query -W -f='${Version}' linux-image-current-meson64 2>/dev/null)
