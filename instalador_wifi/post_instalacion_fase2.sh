@@ -17,6 +17,58 @@
 # * Triple Candado OS: Valida Vermagic en almacenamiento, retorno CLI y estado RAM.
 # =========================================================================
 
+# =====================================================================
+# DETECCIÓN E INYECCIÓN DIRECTA - RTL8189ES
+# =====================================================================
+
+set -e
+
+echo "[+] Buscando la línea de control Wi-Fi en el hardware..."
+
+if command -v gpioinfo &> /dev/null; then
+    WIFI_LINE=$(gpioinfo | grep -E 'consumer="cd"|consumer=cd' | sed -E 's/.*line[[:space:]]+([0-9]+).*/\1/')
+fi
+
+if [ -z "$WIFI_LINE" ]; then
+    echo "[-] Error crítico: El hardware no expone una línea GPIO válida para el Wi-Fi."
+    exit 1
+fi
+
+echo "[+] Hardware validado con éxito: Línea GPIO real detectada -> $WIFI_LINE"
+
+# =====================================================================
+# 1. CONFIGURACIÓN MANUAL O AUTO-DETECCIÓN
+# =====================================================================
+# Deja esta variable vacía para activar la auto-detección por hardware, 
+# o asígnale un número si deseas forzar un valor manual.
+MANUAL_WIFI_PIN=""
+WIFI_LINE=""
+
+if [ -n "$MANUAL_WIFI_PIN" ]; then
+    echo "[+] Usando pin GPIO configurado manualmente: $MANUAL_WIFI_PIN"
+    WIFI_LINE="$MANUAL_WIFI_PIN"
+else
+    echo "[+] Buscando la línea de control Wi-Fi en el hardware de forma universal..."
+    if command -v gpioinfo &> /dev/null; then
+        WIFI_LINE=$(gpioinfo | grep -E 'consumer="cd"|consumer=cd' | sed -E 's/.*line[[:space:]]+([0-9]+).*/\1/')
+    fi
+fi
+
+# =====================================================================
+# 2. GESTIÓN CONDICIONAL DE EXTRA_CFLAGS
+# =====================================================================
+EXTRA_CFLAGS_PARAM=""
+
+if [ -n "$WIFI_LINE" ]; then
+    echo "[+] Pin GPIO validado con éxito -> $WIFI_LINE"
+    EXTRA_CFLAGS_PARAM="-DCONFIG_RTL8189ES_GPIO_INDEX=$WIFI_LINE"
+else
+    echo "[-] Aviso: No se detectó pin por hardware ni se ingresó valor manual."
+    echo "[-] Los flags de GPIO quedarán vacíos y el driver compilará con sus valores por defecto."
+fi
+
+# ====================================================================
+
 # --- AUTO-SOLICITUD DE PERMISOS ROOT ---
 if [ "$EUID" -ne 0 ]; then
   echo "🔐 [INFO] Este script necesita permisos de administrador. Solicitando sudo..."
@@ -64,11 +116,15 @@ if [ -f "Makefile" ]; then
   # =========================================================================
 fi
 
-# =========================================================================
+set -e
+
+# =====================================================================
 # ⚙️ COMPILACIÓN DEL CONTROLADOR (Binario ya inmunizado contra IPS/LPS)
-# =========================================================================
+# =====================================================================
+echo "[+] Iniciando la compilación del driver RTL8189ES..."
+
 echo "🛠️ Compilando el controlador Realtek sobre el kernel actual ($(uname -r))..."
-make -j$(nproc) KSRC=/usr/src/linux-headers-$(uname -r) ARCH=arm64 modules
+make -j$(nproc) KSRC=/usr/src/linux-headers-$(uname -r) ARCH=arm64 EXTRA_CFLAGS="$EXTRA_CFLAGS_PARAM" modules
 
 # 1. VALIDACIÓN INMEDIATA DE LA COMPILACIÓN
 if [ $? -ne 0 ]; then
