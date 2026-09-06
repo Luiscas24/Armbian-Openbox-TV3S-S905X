@@ -23,24 +23,9 @@
 
 set -e
 
-echo "[+] Buscando la línea de control Wi-Fi en el hardware..."
-
-if command -v gpioinfo &> /dev/null; then
-    WIFI_LINE=$(gpioinfo | grep -E 'consumer="cd"|consumer=cd' | sed -E 's/.*line[[:space:]]+([0-9]+).*/\1/')
-fi
-
-if [ -z "$WIFI_LINE" ]; then
-    echo "[-] Error crítico: El hardware no expone una línea GPIO válida para el Wi-Fi."
-    exit 1
-fi
-
-echo "[+] Hardware validado con éxito: Línea GPIO real detectada -> $WIFI_LINE"
-
 # =====================================================================
-# 1. CONFIGURACIÓN MANUAL O AUTO-DETECCIÓN
+# CONFIGURACIÓN: Deja vacío para auto-detección, o pon un número manual
 # =====================================================================
-# Deja esta variable vacía para activar la auto-detección por hardware, 
-# o asígnale un número si deseas forzar un valor manual.
 MANUAL_WIFI_PIN=""
 WIFI_LINE=""
 
@@ -48,14 +33,17 @@ if [ -n "$MANUAL_WIFI_PIN" ]; then
     echo "[+] Usando pin GPIO configurado manualmente: $MANUAL_WIFI_PIN"
     WIFI_LINE="$MANUAL_WIFI_PIN"
 else
-    echo "[+] Buscando la línea de control Wi-Fi en el hardware de forma universal..."
+    echo "[+] Buscando la línea de control Wi-Fi en el hardware..."
+    # -----------------------------------------------------------------
+    # TU SEGMENTO DE DETECCIÓN INTACTO (NO SE TOCA)
     if command -v gpioinfo &> /dev/null; then
         WIFI_LINE=$(gpioinfo | grep -E 'consumer="cd"|consumer=cd' | sed -E 's/.*line[[:space:]]+([0-9]+).*/\1/')
     fi
+    # -----------------------------------------------------------------
 fi
 
 # =====================================================================
-# 2. GESTIÓN CONDICIONAL DE EXTRA_CFLAGS
+# GESTIÓN CONDICIONAL DE EXTRA_CFLAGS
 # =====================================================================
 EXTRA_CFLAGS_PARAM=""
 
