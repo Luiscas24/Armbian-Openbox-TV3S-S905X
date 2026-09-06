@@ -80,22 +80,37 @@ echo "-------------------------------------------------------------------------"
 # =========================================================================
 # 📦 BLOQUE 1: CORE DE NAVEGACIÓN, OFIMÁTICA Y MULTIMEDIA (NATIVOS)
 # =========================================================================
+# Desactivamos temporalmente la expansión por historial (!) por seguridad en el script
+set +H
+
 echo ""
-echo "👉 BLOQUE 1: Herramientas del Día a Día"
-echo "   - Firefox / Chromium: Navegación web estable y acceso a servicios en línea."
-echo "   - LibreOffice: Suite completa para procesamiento de textos, hojas de cálculo y presentaciones."
-echo "   - VLC Media Player: Reproductor multimedia universal para videos y audio local."
-echo "   - GIMP: Editor avanzado para la manipulación y creación de imágenes y gráficos."
-echo -n "¿Instalar este bloque de herramientas básicas? (s/n): "
+echo "👉 BLOQUE 1: Herramientas del Dia a Dia (Fase de Pruebas)"
+echo "   - Firefox / Chromium / Epiphany: Set de navegadores para pruebas de rendimiento."
+echo "   - LibreOffice: Suite completa para oficina."
+echo "   - VLC Media Player: Reproductor multimedia universal."
+echo "   - GIMP: Editor avanzado de imagenes."
+echo -n '¿Instalar este bloque de herramientas básicas? (s/n): '
 read -r INSTALAR_CORE
+
 if [[ "$INSTALAR_CORE" =~ ^[Ss]$ ]]; then
   echo "📦 Inyectando herramientas nativas base..."
   sudo apt update
-  sudo apt install -y firefox-esr chromium libreoffice vlc gimp
+  sudo apt install -y firefox-esr chromium epiphany-browser libreoffice vlc gimp
 
-  echo "🎨 Enlazando Core en el menú de Openbox..."
-  sed -i '/<!-- INYECCION_AUTOMATICA -->/a \    <item label="Firefox Web Browser"><action name="Execute"><execute>firefox-esr<\/execute><\/action><\/item>\n    <item label="Chromium Web Browser"><action name="Execute"><execute>chromium<\/execute><\/action><\/item>\n    <item label="LibreOffice Suite"><action name="Execute"><execute>libreoffice<\/execute><\/action><\/item>\n    <item label="VLC Media Player"><action name="Execute"><execute>vlc<\/execute><\/action><\/item>\n    <item label="GIMP Image Editor"><action name="Execute"><execute>gimp<\/execute><\/action><\/item>' "$MENU_OPENBOX"
+  echo "🎨 Enlazando navegadores en el menú de Openbox..."
+  
+  # Usamos comillas simples estrictas para que Bash no intente procesar el XML ni los escapes
+  sed -i '/<!-- INYECCION_AUTOMATICA -->/a \    <item label="Epiphany Web Browser"><action name="Execute"><execute>epiphany<\/execute><\/action><\/item>' ~/.config/openbox/menu.xml
+  sed -i '/<!-- INYECCION_AUTOMATICA -->/a \    <item label="Chromium Web Browser"><action name="Execute"><execute>chromium<\/execute><\/action><\/item>' ~/.config/openbox/menu.xml
+  sed -i '/<!-- INYECCION_AUTOMATICA -->/a \    <item label="Firefox Web Browser"><action name="Execute"><execute>firefox-esr<\/execute><\/action><\/item>' ~/.config/openbox/menu.xml
+  
+  # Forzar la recarga de Openbox
+  openbox --reconfigure
+  echo "✅ ¡Instalación y menú actualizados con éxito!"
 fi
+
+# Reactivamos la expansión de historial al terminar el bloque
+set -H
 
 # =========================================================================
 # 💻 BLOQUE 2: ENTORNO DE DESARROLLO Y APRENDIZAJE (NATIVOS)
@@ -103,21 +118,35 @@ fi
 echo ""
 echo "👉 BLOQUE 2: Entorno de Programación y Estudio"
 echo "   - VS Code: Editor técnico optimizado para el aprendizaje y desarrollo de código."
-echo "   - Motor Java (OpenJDK): Entorno de ejecución para aplicaciones lógicas de arquitectura."
 echo -n "¿Instalar el entorno de programación y desarrollo? (s/n): "
 read -r INSTALAR_DEV
+
 if [[ "$INSTALAR_DEV" =~ ^[Ss]$ ]]; then
-  echo "📦 Instalando entorno para aprendizaje de programación..."
-  sudo apt install -y openjdk-11-jre
-  
-  if [ -f "$DIR_REAL_INSTALADOR/dependencias_offline/code-arm64.deb" ]; then
-    sudo dpkg -i "$DIR_REAL_INSTALADOR/dependencias_offline/code-arm64.deb"
-    sudo apt install -y -f
-    
-    echo "🎨 Enlazando VS Code en el menú de Openbox..."
-    sed -i '/<!-- INYECCION_AUTOMATICA -->/a \    <item label="VS Code"><action name="Execute"><execute>code --no-sandbox<\/execute><\/action><\/item>' "$MENU_OPENBOX"
+  echo "📦 Instalando VS Code desde los repositorios configurados del sistema..."
+
+  if sudo apt update && sudo apt install -y code; then
+
+    # Configuración del menú de Openbox
+    if dpkg -s code &> /dev/null; then
+      echo "🎨 Enlazando VS Code en el menú de Openbox..."
+
+      # Ajuste para entornos embebidos/root:
+      # evita problemas con el sandbox cuando VS Code se ejecuta como root.
+      if [ "$EUID" -eq 0 ] || [ "$USER" = "root" ]; then
+        LAUNCH_CMD="code --no-sandbox --user-data-dir=/root/.config/Code"
+      else
+        LAUNCH_CMD="code"
+      fi
+
+      sed -i '/<!-- INYECCION_AUTOMATICA -->/a \    <item label="VS Code"><action name="Execute"><execute>'"${LAUNCH_CMD}"'<\/execute><\/action><\/item>' \
+        /ruta/a/tu/menu.xml
+
+    else
+      echo "❌ [ERROR] VS Code no quedó instalado correctamente."
+    fi
+
   else
-    echo "⚠️ [ALERTA] Instalador offline de VS Code no encontrado en dependencias_offline/"
+    echo "❌ [ERROR] No se pudo instalar VS Code desde los repositorios configurados."
   fi
 fi
 
@@ -137,6 +166,10 @@ if [[ "$INSTALAR_CIVIL" =~ ^[Ss]$ ]]; then
   
   echo "🎨 Enlazando Visores y Editores PDF en Openbox..."
   sed -i '/<!-- INYECCION_AUTOMATICA -->/a \    <item label="Atril PDF Viewer"><action name="Execute"><execute>atril<\/execute><\/action><\/item>\n    <item label="Xournal++ (Firma Digital)"><action name="Execute"><execute>xournalpp<\/execute><\/action><\/item>' "$MENU_OPENBOX"
+
+  echo "📦 Instalando entorno de ejecución Java y herramientas criptográficas..."
+  sudo apt install -y default-jre libnss3-tools
+
 
   if [ -f "$DIR_REAL_INSTALADOR/dependencias_offline/autofirma.deb" ]; then
     sudo dpkg -i "$DIR_REAL_INSTALADOR/dependencias_offline/autofirma.deb"
@@ -202,6 +235,30 @@ if [[ "$INSTALAR_FLATPAK" =~ ^[Ss]$ ]]; then
   # Inyección inteligente de Spotify WebApp (corre sobre el navegador nativo)
   echo "🎨 Enlazando WebApp de Spotify en Openbox..."
   sed -i '/<!-- INYECCION_AUTOMATICA -->/a \    <item label="Spotify Web"><action name="Execute"><execute>chromium --app=https:\/\/://spotify.com<\/execute><\/action><\/item>' "$MENU_OPENBOX"
+fi
+
+# === CORRECCIÓN DE ETIQUETA EN EL MENÚ DINÁMICO (SECUENCIAL) ===
+
+# 1. Modificar el archivo del sistema para que obamenu lea "Epiphany Web" en vez de "Web"
+if [ -f "/usr/share/applications/org.gnome.Epiphany.desktop" ]; then
+    # Cambiamos el nombre genérico por el nombre real de la aplicación
+    sed -i 's/^GenericName=.*/GenericName=Epiphany Web/' /usr/share/applications/org.gnome.Epiphany.desktop 2>/dev/null
+    sed -i 's/^Name=.*/Name=Epiphany Web/' /usr/share/applications/org.gnome.Epiphany.desktop 2>/dev/null
+    
+    # Forzar al sistema a actualizar la base de datos de escritorio con el nuevo nombre
+    update-desktop-database /usr/share/applications 2>/dev/null
+fi
+
+# 2. Forzar la reconfiguración gráfica en tu monitor por memoria (tu comando exitoso)
+if pgrep -x "openbox" > /dev/null; then
+    : "${DISPLAY:=:0}"
+    export DISPLAY
+    PID_OPENBOX=$(pgrep -x "openbox" | head -n 1)
+    if [ -n "$PID_OPENBOX" ] && [ -d "/proc/$PID_OPENBOX" ]; then
+        XAUTH_PROCESO=$(cat /proc/"$PID_OPENBOX"/environ 2>/dev/null | tr '\0' '\n' | grep '^XAUTHORITY=' | cut -d= -f2-)
+        [ -n "$XAUTH_PROCESO" ] && export XAUTHORITY="$XAUTH_PROCESO"
+    fi
+    openbox --reconfigure 2>/dev/null
 fi
 
 # =========================================================================
