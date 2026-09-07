@@ -168,17 +168,6 @@ if [ -d "$MEDIA_BASE/armbi_root" ]; then
     echo "[+] Detectada partición externa 'armbi_root' para el usuario $LOGGED_USER..."
     mkdir -p "$RUTA_DESTINO"
     
-# -------------------------------------------------------------------------
-# AUTO-COPIA Y NORMALIZACIÓN DE PERMISOS HÍBRIDOS (Mapeo dinámico de usuario)
-# -------------------------------------------------------------------------
-LOGGED_USER="${SUDO_USER:-$USER}"
-MEDIA_BASE="/run/media/$LOGGED_USER"
-RUTA_DESTINO="$MEDIA_BASE/armbi_root/root/instalador_wifi"
-
-if [ -d "$MEDIA_BASE/armbi_root" ]; then
-    echo "[+] Detectada partición externa 'armbi_root' para el usuario $LOGGED_USER..."
-    mkdir -p "$RUTA_DESTINO"
-    
     # Copiamos todo en bloque (scripts, debs y código fuente)
     cp -r pre_instalacion.sh post_instalacion_fase1.sh post_instalacion_fase2.sh dependencias_offline rtl8189ES_linux "$RUTA_DESTINO/"
 
@@ -254,7 +243,7 @@ if [ -d "$MEDIA_BASE/armbi_root" ]; then
         
         echo "✅ [ÉXITO] ¡Tarjeta SD completamente desvinculada a nivel de sistema!"
         echo "🔒 [OK] Es totalmente seguro retirar la tarjeta SD físicamente ahora."
-    fi
+fi
 else
     echo "⚠️  [AVISO] La partición 'armbi_root' no está montada en $MEDIA_BASE. Se omitió la copia y el desmontaje."
 fi
