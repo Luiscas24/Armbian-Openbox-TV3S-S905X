@@ -167,6 +167,22 @@ RUTA_DESTINO="$MEDIA_BASE/armbi_root/root/instalador_wifi"
 if [ -d "$MEDIA_BASE/armbi_root" ]; then
     echo "[+] Detectada partición externa 'armbi_root' para el usuario $LOGGED_USER..."
     mkdir -p "$RUTA_DESTINO"
+
+    # =========================================================================
+    # 🕒 PARCHE ANTIMUTACIONES HORARIAS PARA S905X (EVITA EL BUCLE DEL FUTURO)
+    # =========================================================================
+    echo "[+] Capturando la hora real de la máquina preparadora..."
+    HORA_HOST=$(date "+%Y-%m-%d %H:%M:%S")
+
+    echo "[+] Inyectando hora del host en el fake-hwclock de Armbian..."
+    echo "$HORA_HOST" | sudo tee "$MEDIA_BASE/armbi_root/etc/fake-hwclock.data"
+
+    # Si ya existen headers en la imagen, les unificamos la fecha al presente
+    if [ -d "$MEDIA_BASE/armbi_root/usr/src" ]; then
+        echo "[+] Sincronizando marcas de tiempo de cabeceras existentes..."
+        find "$MEDIA_BASE/armbi_root/usr/src" -exec touch -d "$HORA_HOST" {} + 2| cat
+    fi
+    # =========================================================================
     
     # Copiamos todo en bloque (scripts, debs y código fuente)
     cp -r pre_instalacion.sh post_instalacion_fase1.sh post_instalacion_fase2.sh dependencias_offline rtl8189ES_linux "$RUTA_DESTINO/"
