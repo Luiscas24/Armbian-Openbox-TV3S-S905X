@@ -5,7 +5,7 @@
 # 🤖 Coautor:      Asistente de IA - Gemini - (Bajo estricta dirección arquitectónica)
 # 🌐 Repo git:     https://github.com/Luiscas24/armbian-tv3s-toolbox
 # 📜 Licencia:     GPL-3.0
-# 🛠️ Versión:      1.1.0 (Corrección de Menú, Arreglo de Pantalla Negra y Picom Compositor)
+# 🛠️ Versión:      1.3.0 (Integración de Wallpaper en LightDM Greeter)
 # =========================================================================
 # Descripción: Automatiza la instalación desatendida de un entorno modular
 #              ultraligero basado en Openbox Puro. Delega el escritorio a
@@ -15,8 +15,8 @@
 
 # --- AUTO-SOLICITUD DE PERMISOS ROOT SILENCIOSA (Autogestionada) ---
 if [ "$EUID" -ne 0 ]; then
-    exec sudo "$0" "$@"
-    exit 1
+  exec sudo "$0" "$@"
+  exit 1
 fi
 
 # --- AUTOCORRECCIÓN DE ENTORNO Y RUTAS (Blindada para TV Box) ---
@@ -36,7 +36,7 @@ USER_HOME=$(eval echo "~$REAL_USER")
 echo "🔄 1. Actualizando índices de paquetes..."
 apt-get update
 
-echo "📦 2. Instalando Openbox, Tint2, Picom (Compositor anti-glitch), gestor de escritorio tradicional y servidor gráfico..."
+echo "📦 2. Instalando Openbox, Tint2, Picom, gestor de escritorio y LightDM Greeter..."
 apt-get install -y --no-install-recommends \
     -o Dpkg::Options::="--force-confdef" \
     -o Dpkg::Options::="--force-confold" \
@@ -51,7 +51,8 @@ apt-get install -y --no-install-recommends \
     picom \
     pcmanfm \
     lxterminal \
-    lightdm
+    lightdm \
+    lightdm-gtk-greeter
 
 echo "🏥 3. Inmunizando variables globales de entorno y D-Bus..."
 for var in 'XDG_CONFIG_DIRS="/etc/xdg:/etc"' 'XDG_DATA_DIRS="/usr/share:/usr/local/share"'; do
@@ -63,17 +64,38 @@ dbus-uuidgen --ensure=/etc/machine-id
 dbus-uuidgen --ensure 2>/dev/null || true
 
 # =========================================================================
-# 🎨 INTEGRACIÓN FÍSICA DEL WALLPAPER LOCAL NATIVO
+# 🎨 INTEGRACIÓN FÍSICA DEL WALLPAPER LOCAL NATIVO Y LIGHTDM
 # =========================================================================
 echo "🎨 3.5 Desplegando fondo de pantalla oficial integrado en la suite..."
 mkdir -p /usr/share/backgrounds
 
-if [ -f Armbian_trianglify_random_blue.jpg ]; then
-    cp Armbian_trianglify_random_blue.jpg /usr/share/backgrounds/Armbian_trianglify_random_blue.jpg
-    chmod 644 /usr/share/backgrounds/Armbian_trianglify_random_blue.jpg
+WALLPAPER_NAME="Armbian_trianglify_random_blue.jpg"
+WALLPAPER_DESTINO="/usr/share/backgrounds/$WALLPAPER_NAME"
+
+if [ -f "$WALLPAPER_NAME" ]; then
+    cp "$WALLPAPER_NAME" "$WALLPAPER_DESTINO"
+    chmod 644 "$WALLPAPER_DESTINO"
+    echo "✅ [OK] Fondo '$WALLPAPER_NAME' instalado exitosamente en $WALLPAPER_DESTINO."
+elif [ -f armbian-tv3s-wallpaper.jpg ]; then
+    cp armbian-tv3s-wallpaper.jpg "$WALLPAPER_DESTINO"
+    chmod 644 "$WALLPAPER_DESTINO"
+    echo "ℹ️ [INFO] Se migró 'armbian-tv3s-wallpaper.jpg' a '$WALLPAPER_DESTINO'."
 else
-    echo "⚠️ [INFO] Archivo 'Armbian_trianglify_random_blue.jpg' no encontrado en el origen. Saltando integración visual."
+    echo "⚠️ [INFO] No se encontró el archivo '$WALLPAPER_NAME' en la ruta de origen local. Saltando copia física."
 fi
+
+echo "🎨 Configurando el fondo de pantalla en el inicio de sesión (LightDM)..."
+cat << EOF > /etc/lightdm/lightdm-gtk-greeter.conf
+[greeter]
+background=$WALLPAPER_DESTINO
+theme-name=Adwaita
+icon-theme-name=Adwaita
+font-name=Sans 10
+xft-antialias=true
+xft-dpi=96
+xft-hintstyle=hintslight
+xft-rgba=rgb
+EOF
 
 # =========================================================================
 # ⚙️ INTEGRACIÓN ATÓMICA: FORZAR SESIÓN POR DEFECTO EN LIGHTDM
@@ -90,6 +112,7 @@ user-session=openbox
 autologin-session=openbox
 type=xlocal
 xserver-command=X -s 0 -dpms
+greeter-session=lightdm-gtk-greeter
 EOF
 
 rm -f "$USER_HOME/.dmrc" 2>/dev/null || true
@@ -103,7 +126,7 @@ echo "⚙️ 4. Programando inicio de componentes con retardo secuencial y compo
 
 mkdir -p "$USER_HOME/.config/openbox"
 
-# ---- [CAMBIO CRÍTICO: FIJAMOS EL PERFIL DE DESKTOP DE FORMA EXPLÍCITA Y PICOM] ----
+# ---- [AJUSTE DE TIEMPOS: RETARDO SECUENCIAL PARA CARGA SEGURA DE WALLPAPER] ----
 cat << 'EOF' > "$USER_HOME/.config/openbox/autostart"
 if [ -z "$DBUS_SESSION_BUS_ADDRESS" ] && [ -x /usr/bin/dbus-launch ]; then
     eval $(dbus-launch --sh-syntax --exit-with-session)
@@ -111,7 +134,7 @@ fi
 sleep 1
 picom --backend xrender --vsync &
 tint2 &
-pcmanfm --desktop --profile default &
+(sleep 1 && pcmanfm --desktop --profile default) &
 EOF
 
 # ---- [INTEGRACIÓN DE MENU.XML PARA EVITAR ERROR DE ROOT-MENU] ----
@@ -138,10 +161,10 @@ echo "🎨 Generando archivos de configuración del escritorio para PCManFM..."
 
 mkdir -p "$USER_HOME/.config/pcmanfm/default"
 
-cat << 'EOF' > "$USER_HOME/.config/pcmanfm/default/desktop-items-0.conf"
+cat << EOF > "$USER_HOME/.config/pcmanfm/default/desktop-items-0.conf"
 [*]
 wallpaper_mode=stretch
-wallpaper=/usr/share/backgrounds/Armbian_trianglify_random_blue.jpg
+wallpaper=$WALLPAPER_DESTINO
 desktop_bg=#000000
 desktop_fg=#ffffff
 show_documents=0
@@ -159,7 +182,7 @@ fi
 sleep 1
 picom --backend xrender --vsync &
 tint2 &
-pcmanfm --desktop --profile default &
+(sleep 1 && pcmanfm --desktop --profile default) &
 EOF
 
 cp "$USER_HOME/.config/openbox/menu.xml" /root/.config/openbox/menu.xml 2>/dev/null || true
@@ -199,8 +222,8 @@ mkdir -p /usr/local/bin
 cat << 'EOF' > /usr/local/bin/Cambiar_a_modo_grafico
 #!/bin/bash
 if [ "$EUID" -ne 0 ]; then
-    exec sudo "$0" "$@"
-    exit 1
+  exec sudo "$0" "$@"
+  exit 1
 fi
 export XDG_CONFIG_DIRS="/etc/xdg:/etc:/usr/share/desktop-base/profiles/xdg:$XDG_CONFIG_DIRS"
 systemctl reload dbus 2>/dev/null || true
@@ -231,6 +254,8 @@ done
 chvt 7 2>/dev/null || chvt 1 2>/dev/null
 
 if [ -e /tmp/.X11-unix/X0 ]; then
+    DISPLAY=:0 sudo -u "$REAL_USER" pcmanfm --desktop-off 2>/dev/null || true
+    DISPLAY=:0 sudo -u "$REAL_USER" pcmanfm --desktop --profile default &
     DISPLAY=:0 sudo -u "$REAL_USER" notify-send "Armbian TV3S" "¡Interfaz gráfica restaurada con éxito! Openbox y Tint2 están activos."
 else
     echo "⚠️ El servidor grafico tardo demasiado en responder."
@@ -277,40 +302,6 @@ if [ -f Cambiar_a_modo_consola.desktop ]; then
     chmod 755 "$DESTINO_DESK/Cambiar_a_modo_consola.desktop"
 else
     echo "⚠️ [INFO] Archivo 'Cambiar_a_modo_consola.desktop' no encontrado en el origen local. Saltando copia."
-fi
-
-# =========================================================================
-# 🚀 GENERACIÓN DE SCRIPTS AUXILIARES DE CAMBIO DE MODO Y ACCESOS DIRECTOS DESKTOP
-# =========================================================================
-echo "🛠️ Generando accesos directos para conmutar entornos..."
-
-# Script para pasar a Modo Gráfico
-cat << 'EOF' > /usr/local/bin/Cambiar_a_modo_grafico_aux
-#!/bin/bash
-systemctl set-default graphical.target
-systemctl start lightdm
-EOF
-chmod +x /usr/local/bin/Cambiar_a_modo_grafico_aux
-
-# Script para pasar a Modo Consola
-cat << 'EOF' > /usr/local/bin/Cambiar_a_modo_consola
-#!/bin/bash
-systemctl set-default multi-user.target
-systemctl stop lightdm
-EOF
-chmod +x /usr/local/bin/Cambiar_a_modo_consola
-
-# Copiar accesos directos desde la carpeta del instalador al escritorio del usuario
-DESKTOP_DIR="/home/$SUDO_USER/Desktop"
-if [ ! -d "$DESKTOP_DIR" ]; then
-    DESKTOP_DIR="/home/$SUDO_USER/Escritorio"
-fi
-
-if [ -f "$DIR_REAL_INSTALADOR/recursos/modo-consola.desktop" ] && [ -f "$DIR_REAL_INSTALADOR/recursos/modo-grafico.desktop" ]; then
-    cp "$DIR_REAL_INSTALADOR/recursos/modo-consola.desktop" "$DESKTOP_DIR/"
-    cp "$DIR_REAL_INSTALADOR/recursos/modo-grafico.desktop" "$DESKTOP_DIR/"
-    chmod +x "$DESKTOP_DIR/modo-consola.desktop" "$DESKTOP_DIR/modo-grafico.desktop"
-    chown $SUDO_USER:$SUDO_USER "$DESKTOP_DIR/modo-consola.desktop" "$DESKTOP_DIR/modo-grafico.desktop"
 fi
 
 systemctl enable lightdm
