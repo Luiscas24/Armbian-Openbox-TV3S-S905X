@@ -52,7 +52,7 @@ echo "⬇️  Abriendo subcarpeta y descargando: linux-image"
 
 lftp -c "
     $LFTP_OPTS
-    open https://armbian.lv.auroradev.org/beta/pool/main/l/linux-6.18.48/;
+    open https://luiscas24.github.io/Armbian-Openbox-TV3S-S905X/pool/main/l/linux-6.18.48/;
     mget linux-image-current-meson64_*.deb
   "
 
@@ -61,7 +61,7 @@ for COMPONENT in headers dtb libc-dev; do
     
     lftp -c "
       $LFTP_OPTS
-      open https://armbian.lv.auroradev.org/beta/pool/main/l/linux-${COMPONENT}-current-meson64/;
+      open https://luiscas24.github.io/Armbian-Openbox-TV3S-S905X/pool/main/l/linux-${COMPONENT}-current-meson64/;
       mget linux-${COMPONENT}-current-meson64_*.deb
     "
 done
