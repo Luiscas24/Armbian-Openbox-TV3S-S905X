@@ -68,11 +68,11 @@ dbus-uuidgen --ensure 2>/dev/null || true
 echo "🎨 3.5 Desplegando fondo de pantalla oficial integrado en la suite..."
 mkdir -p /usr/share/backgrounds
 
-if [ -f armbian-tv3s-wallpaper.jpg ]; then
-    cp armbian-tv3s-wallpaper.jpg /usr/share/backgrounds/Armbian_trianglify_random_blue.jpg
+if [ -f Armbian_trianglify_random_blue.jpg ]; then
+    cp Armbian_trianglify_random_blue.jpg /usr/share/backgrounds/Armbian_trianglify_random_blue.jpg
     chmod 644 /usr/share/backgrounds/Armbian_trianglify_random_blue.jpg
 else
-    echo "⚠️ [INFO] Archivo 'armbian-tv3s-wallpaper.jpg' no encontrado en el origen. Saltando integración visual."
+    echo "⚠️ [INFO] Archivo 'Armbian_trianglify_random_blue.jpg' no encontrado en el origen. Saltando integración visual."
 fi
 
 # =========================================================================
