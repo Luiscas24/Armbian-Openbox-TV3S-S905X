@@ -77,8 +77,9 @@ export PATH=$PATH:/sbin:/usr/sbin:/usr/local/sbin
 echo "🛠️ Despertando y preparando los scripts de arquitectura para el nuevo kernel ($(uname -r))..."
 cd /usr/src/linux-headers-$(uname -r)
 
-make modules_prepare >/dev/null 2>&1
-make scripts >/dev/null 2>&1
+# Agregamos || true para evitar que el script muera si el set -e atrapa un retorno fallido inocuo
+make modules_prepare >/dev/null 2>&1 || true
+make scripts >/dev/null 2>&1 || true
 
 cd "$DIR_BASE"
 # =========================================================================
