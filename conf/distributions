@@ -4,6 +4,7 @@ Codename: stable
 Architectures: arm64
 Components: main
 Description: Servidor APT de paquetes criticos y congelados probados en cajas de TV Amlogic S905X
+SignWith: B3021FDD448EC432
 
 Origin: Kernel-S905x-Provider
 Label: Canal de Pruebas Kernel S905X
@@ -11,3 +12,4 @@ Codename: beta
 Architectures: arm64
 Components: main
 Description: Canal beta para pre-evaluacion de paquetes de kernel y drivers antes de congelar
+SignWith: B3021FDD448EC432

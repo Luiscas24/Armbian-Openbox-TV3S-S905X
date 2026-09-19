@@ -1,0 +1,59 @@
+Package: linux-dtb-current-meson64
+Version: 26.11.0-trunk.30
+Maintainer: Armbian Linux <info@armbian.com>
+Architecture: arm64
+Provides: linux-dtb, linux-dtb-armbian, armbian-current
+Priority: optional
+Section: kernel
+Filename: pool/main/l/linux-dtb-current-meson64/linux-dtb-current-meson64_26.11.0-trunk.30_arm64.deb
+Size: 216600
+SHA256: 93913e6beeb602b062081af2d2632cdfa4db3edd258306567249411baaed7498
+SHA1: e588be062658c33630a81210cf171068de6edffa
+MD5sum: 7768aa3b5af9b52447f40f15c3e25be9
+Description: Armbian Linux current DTBs in /boot/dtb-6.18.48-current-meson64
+ This package contains device tree blobs from the Linux kernel, version 6.18.48-current-meson64
+ version "6.18.48" git revision "5bbb9c9f8f808710e2123f2b30f0d61d7d698f52" codename "Baby Opossum Posse" drivers hash "7115a52c_ceaab8e6" patches hash "3034a00a66799285" .config hash "2bdc6efda928ec0f" .config hook hash "76b3aeb8f7fb12d7" variables hash "e3771f6e9d9ac20167c59982d4ccc58a8e68b59ea73d40feb1c1c8172d251477" framework bash hash "b84fca062c13e2b3"
+Installed-Size: 6505
+Armbian-Original-Hash: 6.18.48-S5bbb-D7115-P3034-C2bdc-H76b3-HK01ba-Ve377-Bb84f-R448a
+
+Package: linux-headers-current-meson64
+Version: 26.11.0-trunk.30
+Maintainer: Armbian Linux <info@armbian.com>
+Architecture: arm64
+Provides: linux-headers (= 6.18.48), linux-headers-armbian, armbian-current
+Depends: make, gcc, libc6-dev, bison, flex, libssl-dev, libelf-dev, pahole | dwarves
+Priority: optional
+Section: devel
+Filename: pool/main/l/linux-headers-current-meson64/linux-headers-current-meson64_26.11.0-trunk.30_arm64.deb
+Size: 15833128
+SHA256: aa9a33e28ec189b15f94008df8ff1d4ef1c1591add945c7120f9df660f0fc475
+SHA1: 1f0f9d0b4db72257287d10a6d8fba0448eb7fe37
+MD5sum: 70e3b6b58cdacfbbe79c814b0a8e1f1e
+Description: Armbian Linux current headers 6.18.48-current-meson64
+ This package provides kernel header files for 6.18.48-current-meson64
+ .
+ This is useful for DKMS and building of external modules.
+ version "6.18.48" git revision "5bbb9c9f8f808710e2123f2b30f0d61d7d698f52" codename "Baby Opossum Posse" drivers hash "7115a52c_ceaab8e6" patches hash "3034a00a66799285" .config hash "2bdc6efda928ec0f" .config hook hash "76b3aeb8f7fb12d7" variables hash "e3771f6e9d9ac20167c59982d4ccc58a8e68b59ea73d40feb1c1c8172d251477" framework bash hash "b84fca062c13e2b3"
+Installed-Size: 84228
+Armbian-Original-Hash: 6.18.48-S5bbb-D7115-P3034-C2bdc-H76b3-HK01ba-Ve377-Bb84f-R448a
+
+Package: linux-libc-dev-current-meson64
+Version: 26.11.0-trunk.30
+Maintainer: Armbian Linux <info@armbian.com>
+Provides: linux-libc-dev
+Conflicts: linux-libc-dev
+Architecture: arm64
+Priority: optional
+Section: devel
+Filename: pool/main/l/linux-libc-dev-current-meson64/linux-libc-dev-current-meson64_26.11.0-trunk.30_arm64.deb
+Size: 1440800
+SHA256: 4facd31ff7dc2f91bb4520264a4f22f212d5fafaf940ee9e9b5c526825673a37
+SHA1: fe2fdae393d2aac69b5ec87f3cf122e1809927cd
+MD5sum: e1afb394bd6bf13326a04248f494dcb8
+Description: Armbian Linux support headers for userspace development
+ This package provides userspaces headers from the Linux kernel.  These headers
+ are used by the installed headers for GNU glibc and other system libraries.
+Multi-Arch: same
+Installed-Size: 6841
+Armbian-Original-Hash: 6.18.48-S5bbb-D7115-P3034-C2bdc-H76b3-HK01ba-Ve377-Bb84f-R448a
+

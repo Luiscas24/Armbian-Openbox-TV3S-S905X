@@ -1,3 +1,6 @@
+-----BEGIN PGP SIGNED MESSAGE-----
+Hash: SHA512
+
 Origin: Kernel-S905x-Provider
 Label: Repositorio Mirror de Kernels Probados S905X
 Codename: stable
@@ -17,3 +20,19 @@ SHA256:
  e60c5f0b8c2f8ea4fddbf7709f9c8e0fa788ae92b32b5b01640fba873ad688c3 3265 main/binary-arm64/Packages
  16e3dbb7a91e56b956cc170d6ba1dbe8f2745ae44c8b1ea70f7a83f84ebfddb0 1200 main/binary-arm64/Packages.gz
  a18dd7149a74540d9f7c0f35eeb529ea4330240b8c6e97740898edd755567995 216 main/binary-arm64/Release
+-----BEGIN PGP SIGNATURE-----
+
+iQIzBAEBCgAdFiEEjH2lm9HM9DDCnuoTswIf3USOxDIFAmqu3vQACgkQswIf3USO
+xDKorRAAlzOtgw/V7cRdBa001JqOb/gM7aKPsV6BH0uDE1qBhnjXi4qAgs92XGWW
+X55JP5YSinCnxwJFmUE19zSE1DR3zMdpkpiCv7cL+Iqw14jpp3cL1oQrLOmEuhSz
+tVXZ8ZNF5ER4dCenzEbV2JnMxhxTDHOt9ORaRuT+8AN2uN9iiyak5GBaNOXhZOTD
+8QrRfyQHw7VO50BFfEGwPtqB3T1G6p0XFnqhhEdf4bw2QjyfqFhXbvN0Cpjyh6hz
+Y5VJkncCGXmI/mgetlWh2C7vfSV0r6KY30eg6JIiWWCa/vfXtyT+LDHo4Yhs9iTV
+DuCC3xhwQvlyCa/FxXJHyDcwQqf7JKAZG3OLERQwrf2YvynBVsngPyNYNQowCJF1
+P3JeykfJlOw7VQabCA5F08TP3bbOdEU8GJWcN/TH2J2C/PQa/baayFVqZ+9Q5/ZQ
+ucwTtFelJEt15CyeI8lcK2zgsx2u8wDNPGmTKq6aat4+yaVj3eM6Q6F2X56nVN7M
+ahSi63Um8MPg6i3fueq+F2psPZklShmgtgEk5pBGdndjUk6e9e8KMgGRoMHx5bn4
+uvG97GIo52803NzighaUdj0v6F8o7KXHaJCGRsEQEeVa/WmXy7DMg1x4BfqDbJYc
+1ClD7VvfDiZQmcEekEhUgKVoyuOdtN+BjtaKe+49ULvodx4QCx0=
+=In1D
+-----END PGP SIGNATURE-----
