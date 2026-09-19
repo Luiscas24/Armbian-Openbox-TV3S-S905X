@@ -4,7 +4,7 @@ Hash: SHA512
 Origin: Kernel-S905x-Provider
 Label: Repositorio Mirror de Kernels Probados S905X
 Codename: stable
-Date: Sat, 19 Sep 2026 19:13:48 UTC
+Date: Sat, 19 Sep 2026 19:41:42 UTC
 Architectures: arm64
 Components: main
 Description: Servidor APT de paquetes criticos y congelados probados en cajas de TV Amlogic S905X
@@ -22,17 +22,17 @@ SHA256:
  a18dd7149a74540d9f7c0f35eeb529ea4330240b8c6e97740898edd755567995 216 main/binary-arm64/Release
 -----BEGIN PGP SIGNATURE-----
 
-iQIzBAEBCgAdFiEEjH2lm9HM9DDCnuoTswIf3USOxDIFAmqu3vQACgkQswIf3USO
-xDKorRAAlzOtgw/V7cRdBa001JqOb/gM7aKPsV6BH0uDE1qBhnjXi4qAgs92XGWW
-X55JP5YSinCnxwJFmUE19zSE1DR3zMdpkpiCv7cL+Iqw14jpp3cL1oQrLOmEuhSz
-tVXZ8ZNF5ER4dCenzEbV2JnMxhxTDHOt9ORaRuT+8AN2uN9iiyak5GBaNOXhZOTD
-8QrRfyQHw7VO50BFfEGwPtqB3T1G6p0XFnqhhEdf4bw2QjyfqFhXbvN0Cpjyh6hz
-Y5VJkncCGXmI/mgetlWh2C7vfSV0r6KY30eg6JIiWWCa/vfXtyT+LDHo4Yhs9iTV
-DuCC3xhwQvlyCa/FxXJHyDcwQqf7JKAZG3OLERQwrf2YvynBVsngPyNYNQowCJF1
-P3JeykfJlOw7VQabCA5F08TP3bbOdEU8GJWcN/TH2J2C/PQa/baayFVqZ+9Q5/ZQ
-ucwTtFelJEt15CyeI8lcK2zgsx2u8wDNPGmTKq6aat4+yaVj3eM6Q6F2X56nVN7M
-ahSi63Um8MPg6i3fueq+F2psPZklShmgtgEk5pBGdndjUk6e9e8KMgGRoMHx5bn4
-uvG97GIo52803NzighaUdj0v6F8o7KXHaJCGRsEQEeVa/WmXy7DMg1x4BfqDbJYc
-1ClD7VvfDiZQmcEekEhUgKVoyuOdtN+BjtaKe+49ULvodx4QCx0=
-=In1D
+iQIzBAEBCgAdFiEEjH2lm9HM9DDCnuoTswIf3USOxDIFAmqu5XsACgkQswIf3USO
+xDLeDBAAsLJmzCxp/l9QK+H6urWx+Mc3U54r1LF7fr43j6y83cKNoYBcYBryGuNC
+/YJaF+hCxQ4bZ1YXrbkn4bEz7ALDnSwF6pdW030fWJ/KwFYmH8DjtRYooHmRmpOh
+T09k5BaP1zfE7up0vlAnW/YuiYguStPXbRwSMVFptY6Uh1HH4l2ITJSE4xEZyztl
++M/V5uAI+A9YRuCpURBvzrBvZFirMhRhKJDoUsAkT/ZEbjgGYZhFgQWSlOjullay
+qsKQAUhEE4TxZTnp5XZ83rTnt9NBn01asAg8TYW6HeAXkJqDxSECtkK24sz2iiVr
+BdXGoTaZOGesnJhNPY6Ng/KOcSSL86Xs1ijn7Y3QAUgPthWaNfvy4WXBDLxohdqI
+N0MMmZkE6s7pykvOs4xcx9bRfDmQNDo2Oa7tUChQL1ipKlkxnNIG/DOJlc71wykD
+3Xq5wv0Bc+508vxU8jOrgdOEDsvN8GTf7vcCbKvomR/Dz07J4tVFLgr/W1GwMj73
+o+olh5WggMtVeAgQjuRp7R+ZgaInI7spEkAoQxGWziAtApiTFRO/E7PjYt1SP5z2
+7ZOng0HljUs2SP63JDDNlePQdegIGKYA/G3YuLwjIlMBBfz11bTGc5arqekFtV7d
+BtvTNcWApaJwo12/AiAlytmkJ0URyLQNKdsF4z+xW847vLx4TkU=
+=JCCk
 -----END PGP SIGNATURE-----

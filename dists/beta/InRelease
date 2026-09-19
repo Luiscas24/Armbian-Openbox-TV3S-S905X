@@ -4,7 +4,7 @@ Hash: SHA512
 Origin: Kernel-S905x-Provider
 Label: Canal de Pruebas Kernel S905X
 Codename: beta
-Date: Sat, 19 Sep 2026 19:13:56 UTC
+Date: Sat, 19 Sep 2026 19:41:48 UTC
 Architectures: arm64
 Components: main
 Description: Canal beta para pre-evaluacion de paquetes de kernel y drivers antes de congelar
@@ -22,17 +22,17 @@ SHA256:
  5d61bc02795f448bc1d458c24c4e437a07d26c613552a122b14f85f32df15d6c 197 main/binary-arm64/Release
 -----BEGIN PGP SIGNATURE-----
 
-iQIzBAEBCgAdFiEEjH2lm9HM9DDCnuoTswIf3USOxDIFAmqu3vQACgkQswIf3USO
-xDLonA/9GNY/jvDwNFw/rjTL+LMfngTFvToNzg5geGDcz/JUJPPoDfxWnW6UrG4/
-VmBnpr/rYd1M6lxC4WPON+QHsB102/CY3Jo1F9FpRODRrbPBM/R3nyqkzaCxJ+9X
-DISKv1yZQy8Z4l/wKOsYPH/L4DfTwUEHiFqTf0eKvmuwnOr7gUU5jG/66lcMLCKm
-AEXEENA9FRjXxnnEATU3PFnNf4k4WYOvpUlhtqEnyTLFqI45c30Ft2GcN9hmCsL5
-k4Z0qON8ZPbtIQ4YwMZVCohqwaemf46OCpAZ8L1u0S1A21hXGrKwr3nY6JPSRdzz
-dFqEcvGyAOYe35xDtD8ZgsjZopYc2ZwY06NGf/InNbZXJDmov0INzTenSs5AoeSm
-ruyM0f9s9+Dr0HlShEIlEszrxPKtLdZbJBKkTLJsy4rbvlmHLFNfMm3clYF6VFdQ
-a4ASdgijMhdHkCNINTO+tEKYaWAyL4fFbbWz6dDzCrod4oLG2AeboZqTPphkC6Fv
-ktS90qM34EKgdQ59iZ1lH9m9egk9iorljQApYrfcFWZpA1cZoaIPz+OctRdHTfzy
-4ufchPB/4ENIs3mYjlgs0PORHxqI5AQCAcZkmUQCT8WTkb4y83zwtT5H5k9NZRo6
-g67K0uWkeChqGZBgU7tJbKsTRqtjLpWptfcX7v6+E06UAODXY7s=
-=JS1X
+iQIzBAEBCgAdFiEEjH2lm9HM9DDCnuoTswIf3USOxDIFAmqu5XwACgkQswIf3USO
+xDLvnQ/+JqqjYh5Y+9yd/dkOlBm/sGp5sSd8WeNCDsmmBG0wcrmRjVwnW+izP4+R
+NLw0uYKZFYkkWmhxNcL2eemIIUQ7zGOJOmWy9trvy8xUFWncRDA3ced0qbq/t9ym
+McqQH0MSVvabTzKUQdObOREt3/Vis/rVBkt9vY3HUCwjacHgJRqxQvlg/b7aH72d
+yKpxEehR40Rl03NHsgmsA5CTWdOjBshm6fvKXI8MXz37Wro9doL4xqooYfCKthf1
+2FvIVwfixrA0koe1d8czIWXCm78bEgmkjDSa8Gh3GzzgJiBVRT3WhAPW6TCkzrSo
+1uASJ/lcn+KSkzZhsxp+uK34K73xDe7JoW10YJIx1xckJiiC8/meOYznCgB3RYJN
+0YqHd7FNh13aREySPPbgE+6+aTouOlyj5c4tH0tpSQGIgkiIY/I7N9BbS//7mW98
+zX594uaPeFT0ONOFdi3FeHYO/cZvWTTzgO7u/GG6v4kvhzhjJAn8WqUUqdTX2728
+22yJYnGwKNUq2ymj0BEkDIQODHFGSymbEmWLsJMd38pRZU/UUIsLMj/1/3PBEfRP
+yFoD+o5J4h1AePARconuIdJh0XKRyGgjurscHoN1dwyyLwClPz8aV4xnikvLpaFA
+JwowEWLTyCTkEu8dnitMs/aeFbRPDmANLZMJzInY6gj47NIU6t4=
+=HRaz
 -----END PGP SIGNATURE-----
