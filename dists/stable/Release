@@ -1,19 +1,19 @@
 Origin: Kernel-S905x-Provider
-Label: Repositorio del Kernel S905x
+Label: Repositorio Mirror de Kernels Probados S905X
 Codename: stable
-Date: Sat, 19 Sep 2026 18:51:13 UTC
+Date: Sat, 19 Sep 2026 19:03:18 UTC
 Architectures: arm64
 Components: main
-Description: Servidor APT independiente para kernels modernos y drivers en cajas de TV Amlogic S905X
+Description: Servidor APT de paquetes criticos y congelados probados en cajas de TV Amlogic S905X
 MD5Sum:
  d41d8cd98f00b204e9800998ecf8427e 0 main/binary-arm64/Packages
  7029066c27ac6f5ef18d660d5741979a 20 main/binary-arm64/Packages.gz
- 806496814eb24914ff74617b4b73d466 203 main/binary-arm64/Release
+ 1286d04fa56f72490e755deaa3f83aab 216 main/binary-arm64/Release
 SHA1:
  da39a3ee5e6b4b0d3255bfef95601890afd80709 0 main/binary-arm64/Packages
  46c6643f07aa7f6bfe7118de926b86defc5087c4 20 main/binary-arm64/Packages.gz
- 58f46d7f31f254d01d6dc84416dcedae6e465f6a 203 main/binary-arm64/Release
+ edc4370a40b7f16822c1e29f249acc6c685a84a8 216 main/binary-arm64/Release
 SHA256:
  e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855 0 main/binary-arm64/Packages
  59869db34853933b239f1e2219cf7d431da006aa919635478511fabbfc8849d2 20 main/binary-arm64/Packages.gz
- 1a7a7f0f4ccd2369c9cc4bf7888534ce249eaeafa3822e8b413d04cd067d23ae 203 main/binary-arm64/Release
+ a18dd7149a74540d9f7c0f35eeb529ea4330240b8c6e97740898edd755567995 216 main/binary-arm64/Release

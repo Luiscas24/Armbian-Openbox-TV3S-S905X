@@ -1,5 +1,5 @@
 Component: main
 Origin: Kernel-S905x-Provider
-Label: Repositorio del Kernel S905x
+Label: Repositorio Mirror de Kernels Probados S905X
 Architecture: arm64
-Description: Servidor APT independiente para kernels modernos y drivers en cajas de TV Amlogic S905X
+Description: Servidor APT de paquetes criticos y congelados probados en cajas de TV Amlogic S905X
